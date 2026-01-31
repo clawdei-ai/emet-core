@@ -1,0 +1,21 @@
+{
+  "name": "@emet-protocol/integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for the EMET Protocol",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand --forceExit",
+    "test:ci": "jest --runInBand --forceExit --ci --verbose"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000,
+    "verbose": true
+  }
+}
