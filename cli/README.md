@@ -15,7 +15,11 @@ npm link
 ## Quick Start
 
 ```bash
-# Generate a keypair
+# Initialize a new project (creates dirs, keypair, config)
+emet init my-project
+cd my-project
+
+# Or generate a standalone keypair
 emet keygen
 
 # Create a claim
@@ -29,6 +33,51 @@ emet verify claim.json
 ```
 
 ## Commands
+
+### `emet init [dir]`
+
+Initialize a new EMET project with directory structure, a default keypair, and configuration.
+
+```bash
+# Initialize in current directory
+emet init
+
+# Initialize in a new directory
+emet init my-project
+
+# Reinitialize (overwrite config)
+emet init --force
+```
+
+This creates:
+- `claims/` — Directory for signed claim JSON files
+- `keys/default.json` — Ed25519 keypair for signing
+- `proofs/` — Directory for Merkle proofs
+- `.emet.json` — Project configuration (`version`, `keyPath`)
+- `README.md` — Basic usage instructions
+
+**Options:**
+- `-f, --force` — Overwrite existing `.emet.json` config
+
+**Output:**
+```
+✓ EMET project initialized in my-project/
+
+  Created:
+    claims/          — Store your signed claims here
+    keys/default.json — Ed25519 signing keypair
+    proofs/          — Store Merkle proofs here
+    .emet.json       — Project configuration
+    README.md        — Usage instructions
+
+  Public key: base64-encoded-public-key
+
+  Next steps:
+    emet claim create "Your first claim" --key ./keys/default.json > claims/first.json
+    emet verify claims/first.json
+```
+
+---
 
 ### `emet keygen`
 
@@ -228,7 +277,11 @@ emet tree verify claim1.json proof.json abc123def456...
 ### 1. Setup
 
 ```bash
-# Generate a signing key
+# Initialize project (recommended)
+emet init my-project
+cd my-project
+
+# Or just generate a signing key
 emet keygen -o agent-key
 ```
 

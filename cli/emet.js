@@ -147,6 +147,125 @@ program
   .version('1.0.0');
 
 // ============================================================================
+// Init Command
+// ============================================================================
+
+program
+  .command('init [dir]')
+  .description('Initialize a new EMET project with directory structure, keypair, and config')
+  .option('-f, --force', 'Overwrite existing .emet.json config')
+  .action(async (dir, options) => {
+    try {
+      const projectDir = dir ? path.resolve(dir) : process.cwd();
+      const configFile = path.join(projectDir, '.emet.json');
+
+      // Check for existing project
+      if (fs.existsSync(configFile) && !options.force) {
+        console.error(`Error: .emet.json already exists in ${projectDir}`);
+        console.error('Use --force to reinitialize.');
+        process.exit(1);
+      }
+
+      // 1. Create directory structure
+      const dirs = ['claims', 'keys', 'proofs'];
+      if (!fs.existsSync(projectDir)) {
+        fs.mkdirSync(projectDir, { recursive: true });
+      }
+      for (const d of dirs) {
+        const dirPath = path.join(projectDir, d);
+        if (!fs.existsSync(dirPath)) {
+          fs.mkdirSync(dirPath, { recursive: true });
+        }
+      }
+
+      // 2. Generate default keypair
+      const keyFile = path.join(projectDir, 'keys', 'default.json');
+      const keyPair = generateKeyPair();
+      const keyData = {
+        name: 'default',
+        algorithm: 'ed25519',
+        publicKey: Buffer.from(keyPair.publicKey).toString('base64'),
+        secretKey: Buffer.from(keyPair.secretKey).toString('base64'),
+        createdAt: new Date().toISOString()
+      };
+      fs.writeFileSync(keyFile, JSON.stringify(keyData, null, 2), { mode: 0o600 });
+
+      // 3. Create .emet.json config
+      const config = {
+        version: '0.1.0',
+        keyPath: './keys/default.json'
+      };
+      fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+
+      // 4. Create README.md
+      const readmePath = path.join(projectDir, 'README.md');
+      if (!fs.existsSync(readmePath)) {
+        const readme = `# EMET Project
+
+This project uses the [EMET Protocol](https://github.com/clawdei-ai/emet-core) for epistemic claim management.
+
+## Directory Structure
+
+- \`claims/\` — Signed claim JSON files
+- \`keys/\` — Ed25519 keypairs for signing
+- \`proofs/\` — Merkle proofs for claim verification
+
+## Quick Start
+
+\`\`\`bash
+# Create a signed claim
+emet claim create "Your statement here" \\
+  --confidence 0.9 \\
+  --key ./keys/default.json > claims/my-claim.json
+
+# Verify a claim
+emet verify claims/my-claim.json
+
+# Build a Merkle tree from all claims
+emet tree build ./claims/ -o proofs/tree.json
+
+# Generate a proof for a specific claim
+emet tree prove claims/my-claim.json ./claims/ -o proofs/my-proof.json
+\`\`\`
+
+## Configuration
+
+Project settings are stored in \`.emet.json\`:
+
+- **version** — EMET config version
+- **keyPath** — Default keypair path for signing
+
+## Learn More
+
+See the [EMET CLI documentation](https://github.com/clawdei-ai/emet-core/blob/main/cli/README.md) for the full command reference.
+`;
+        fs.writeFileSync(readmePath, readme);
+      }
+
+      // 5. Print success message
+      const displayDir = dir || '.';
+      console.log(`\n✓ EMET project initialized in ${displayDir}/\n`);
+      console.log('  Created:');
+      console.log('    claims/          — Store your signed claims here');
+      console.log('    keys/default.json — Ed25519 signing keypair');
+      console.log('    proofs/          — Store Merkle proofs here');
+      console.log('    .emet.json       — Project configuration');
+      if (!dir || !fs.existsSync(path.join(projectDir, 'README.md'))) {
+        console.log('    README.md        — Usage instructions');
+      }
+      console.log(`\n  Public key: ${keyPair.publicKeyBase64}\n`);
+      console.log('  Next steps:');
+      console.log('    emet claim create "Your first claim" --key ./keys/default.json > claims/first.json');
+      console.log('    emet verify claims/first.json');
+      console.log('');
+
+    } catch (err) {
+      console.error(`Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // Key Generation Command
 // ============================================================================
 
