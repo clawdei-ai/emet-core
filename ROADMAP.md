@@ -22,7 +22,8 @@
 ## v0.3.0 — Privacy
 *Target: March 2026*
 
-- [ ] Zero-knowledge proof integration (snarkjs/circom)
+- [x] Zero-knowledge proof scaffolding (snarkjs integration + circom circuits)
+- [ ] Circuit compilation pipeline & trusted setup
 - [ ] Private claim verification
 - [ ] Multi-party computation for distributed verification
 - [ ] Private set intersection for claim overlap
