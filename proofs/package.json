@@ -1,20 +1,26 @@
 {
-  "name": "@emet/proofs",
-  "version": "0.1.0",
-  "description": "Zero-knowledge proof and cryptographic modules for the EMET protocol",
-  "main": "zkp.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "@emet-protocol/proofs",
+  "version": "0.2.0",
+  "description": "Cryptographic proof modules for the EMET Protocol — BLS aggregation, ZKP",
+  "author": "EMET Protocol Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clawdei-ai/emet-core.git",
+    "directory": "proofs"
+  },
+  "main": "bls.js",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
-    "snarkjs": "^0.7.5"
+    "@noble/bls12-381": "^1.4.0",
+    "@noble/hashes": "^1.7.2"
   },
-  "keywords": [
-    "zkp",
-    "zero-knowledge",
-    "snarkjs",
-    "circom",
-    "emet"
-  ],
-  "license": "MIT"
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "scripts": {
+    "test": "jest"
+  }
 }

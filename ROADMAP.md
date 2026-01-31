@@ -14,9 +14,9 @@
 ## Next: v0.2.0 — Aggregation
 *Target: February 2026*
 
-- [ ] BLS12-381 signature aggregation (`/proofs/bls.js`)
-- [ ] Multi-agent claim signing (n-of-m threshold)
-- [ ] Aggregate verification for claim batches
+- ✅ BLS12-381 signature aggregation (`/proofs/bls.js`)
+- ✅ Multi-agent claim signing via BLS aggregation
+- ✅ Aggregate verification for claim batches
 - [ ] Performance benchmarks
 
 ## v0.3.0 — Privacy
