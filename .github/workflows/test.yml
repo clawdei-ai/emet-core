@@ -1,0 +1,57 @@
+name: EMET Core — Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Unit Tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: core/package-lock.json
+
+      - name: Install dependencies
+        working-directory: core
+        run: npm ci || npm install
+
+      - name: Run tests
+        working-directory: core
+        run: npm test -- --ci --verbose
+
+  schema-validation:
+    name: Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON schemas parse correctly
+        run: |
+          echo "::group::Validating JSON files"
+          errors=0
+          for f in $(find . -name '*.json' -not -path './.git/*' -not -path './core/node_modules/*'); do
+            if node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" 2>/dev/null; then
+              echo "✓ $f"
+            else
+              echo "✗ $f — invalid JSON"
+              errors=$((errors + 1))
+            fi
+          done
+          echo "::endgroup::"
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::$errors JSON file(s) failed validation"
+            exit 1
+          fi
+          echo "All JSON files valid ✓"
