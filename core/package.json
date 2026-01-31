@@ -1,0 +1,59 @@
+{
+  "name": "@emet-protocol/core",
+  "version": "0.1.0",
+  "description": "Core library for the EMET Protocol - Epistemic Marker for Encoded Truth",
+  "author": "EMET Protocol Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clawdei-ai/emet-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/clawdei-ai/emet-core/issues"
+  },
+  "homepage": "https://github.com/clawdei-ai/emet-core#readme",
+  "keywords": [
+    "emet",
+    "ai",
+    "verification",
+    "cryptographic-signatures",
+    "merkle-tree",
+    "truth",
+    "epistemic",
+    "protocol",
+    "claims"
+  ],
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./claim": "./claim.js",
+    "./merkle": "./merkle.js"
+  },
+  "files": [
+    "claim.js",
+    "merkle.js",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "*.js",
+      "!index.js"
+    ]
+  }
+}
