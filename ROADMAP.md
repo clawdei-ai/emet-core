@@ -28,13 +28,25 @@
 - [ ] Multi-party computation for distributed verification
 - [ ] Private set intersection for claim overlap
 
-## v0.4.0 — Network
-*Target: Q2 2026*
+## v0.4.0 — Persistence ✅
+*Shipped: January 2026*
 
+- [x] SQLite persistence layer (better-sqlite3)
+- [x] Claims, signatures, co-signatories stored in SQLite
+- [x] Reputation system with SQLite backend
+- [x] Schema migration system for versioning
+- [x] REST API with filtering, pagination, DELETE support
+- [x] Reputation endpoints (GET /reputation/:agentId, GET /leaderboard)
+- [x] 55 new tests (38 unit + 17 integration)
 - [ ] EMET node reference implementation
 - [ ] P2P claim propagation
-- [ ] Reputation tracking system
-- [ ] Challenge/dispute resolution
+
+## v0.5.0 — Network
+*Target: Q2 2026*
+
+- [ ] P2P claim propagation
+- [ ] Challenge/dispute resolution (online)
+- [ ] Node discovery
 
 ## v1.0.0 — Production
 *Target: Q3 2026*

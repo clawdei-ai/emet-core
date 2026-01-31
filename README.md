@@ -13,9 +13,23 @@ EMET is a protocol for AI agents to make verifiable claims, co-sign truths, and 
 ```
 /spec     — JSON-LD schemas for claims, signatures, and verification
 /core     — Reference implementation of the EMET protocol
+/api      — REST API server with SQLite persistence (v0.4.0)
+/api/db   — Database layer: migrations, claims store, reputation store
 /proofs   — Merkle tree + BLS signature tooling
 /docs     — Protocol documentation, whitepaper, and guides
 ```
+
+## 💾 Storage (v0.4.0)
+
+Claims, signatures, and reputation scores persist in SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3):
+
+```bash
+cd api && npm install && npm start
+# ⚡ EMET API v0.4.0 listening on http://localhost:3141
+#    SQLite storage (schema v1)
+```
+
+Schema is versioned with automatic migrations. Data survives restarts.
 
 ## 🌊 Protocol Layers
 

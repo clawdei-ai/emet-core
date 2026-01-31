@@ -3,18 +3,21 @@
  * EMET Protocol — REST API Server
  *
  * A minimal Express server that wraps @emet-protocol/core and exposes
- * claim lifecycle operations over HTTP.  Designed for local dev/test.
+ * claim lifecycle operations over HTTP. Now with SQLite persistence!
  *
  * Usage:
  *   cd api && npm install && npm start
  *
  * Default port: 3141 (override with PORT env var)
+ * 
+ * @version 0.4.0
  */
 
 const express = require('express');
 const cors = require('cors');
 const emet = require('../core');
 const store = require('./store');
+const reputation = require('./db/reputation');
 
 const app = express();
 const PORT = process.env.PORT || 3141;
@@ -58,16 +61,22 @@ function rebuildTree() {
 
 // Health check
 app.get('/', (_req, res) => {
+  const schemaVersion = store.getSchemaVersion();
   res.json({
     name: '@emet-protocol/api',
-    version: '0.1.0',
+    version: '0.4.0',
+    storage: 'sqlite',
+    schemaVersion,
     endpoints: [
       'POST   /claims',
+      'GET    /claims',
       'GET    /claims/:id',
       'POST   /claims/:id/sign',
       'POST   /verify',
       'GET    /tree',
       'POST   /tree/prove',
+      'GET    /reputation/:agentId',
+      'GET    /leaderboard',
     ],
   });
 });
@@ -87,6 +96,10 @@ app.post('/claims', (req, res) => {
 
     const claim = emet.createClaim(req.body);
     store.put(claim);
+    
+    // Record claim for reputation tracking
+    reputation.recordClaim(req.body.issuer, claim.id);
+    
     treeCache = null; // invalidate
 
     res.status(201).json(claim);
@@ -97,9 +110,21 @@ app.post('/claims', (req, res) => {
 
 /**
  * GET /claims — List all claims (optional).
+ * 
+ * Query params:
+ *   - issuer: Filter by issuer
+ *   - type: Filter by claim type
+ *   - limit: Maximum results
+ *   - offset: Pagination offset
  */
-app.get('/claims', (_req, res) => {
-  res.json(store.list());
+app.get('/claims', (req, res) => {
+  const options = {};
+  if (req.query.issuer) options.issuer = req.query.issuer;
+  if (req.query.type) options.type = req.query.type;
+  if (req.query.limit) options.limit = parseInt(req.query.limit, 10);
+  if (req.query.offset) options.offset = parseInt(req.query.offset, 10);
+  
+  res.json(store.list(options));
 });
 
 /**
@@ -117,6 +142,21 @@ app.get('/claims/:id', (req, res) => {
   if (!claim) return res.status(404).json({ error: 'Claim not found' });
 
   res.json(claim);
+});
+
+/**
+ * DELETE /claims/:id — Delete a claim.
+ */
+app.delete('/claims/:id', (req, res) => {
+  const id = req.params.id.startsWith('emet:claim:')
+    ? req.params.id
+    : `emet:claim:${req.params.id}`;
+
+  const deleted = store.del(id);
+  if (!deleted) return res.status(404).json({ error: 'Claim not found' });
+
+  treeCache = null;
+  res.status(204).send();
 });
 
 /**
@@ -240,11 +280,99 @@ app.post('/tree/prove', (req, res) => {
   }
 });
 
+// ---- Reputation -----------------------------------------------------------
+
+/**
+ * GET /reputation/:agentId — Get reputation for an agent.
+ */
+app.get('/reputation/:agentId', (req, res) => {
+  const agentId = req.params.agentId.startsWith('emet:agent:')
+    ? req.params.agentId
+    : `emet:agent:${req.params.agentId}`;
+
+  const rep = reputation.getReputation(agentId);
+  const trust = reputation.calculateTrust(agentId);
+
+  res.json({
+    agentId,
+    ...rep,
+    trust
+  });
+});
+
+/**
+ * GET /leaderboard — Get top agents by trust score.
+ * 
+ * Query params:
+ *   - limit: Number of agents to return (default: 10)
+ */
+app.get('/leaderboard', (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const leaderboard = reputation.getLeaderboard(limit);
+  res.json(leaderboard);
+});
+
+/**
+ * POST /reputation/:agentId/verify — Record a verification result.
+ * 
+ * Body: { claimId, result }
+ */
+app.post('/reputation/:agentId/verify', (req, res) => {
+  try {
+    const agentId = req.params.agentId.startsWith('emet:agent:')
+      ? req.params.agentId
+      : `emet:agent:${req.params.agentId}`;
+
+    const err = requireFields(req.body, ['claimId', 'result']);
+    if (err) return res.status(400).json({ error: err });
+
+    reputation.recordVerification(agentId, req.body.claimId, req.body.result);
+
+    const rep = reputation.getReputation(agentId);
+    const trust = reputation.calculateTrust(agentId);
+
+    res.json({
+      agentId,
+      ...rep,
+      trust
+    });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ---- Database Info --------------------------------------------------------
+
+/**
+ * GET /db/stats — Get database statistics.
+ */
+app.get('/db/stats', (_req, res) => {
+  const claimCount = store.count();
+  const agentCount = reputation.getAllAgents().length;
+  const schemaVersion = store.getSchemaVersion();
+
+  res.json({
+    claims: claimCount,
+    agents: agentCount,
+    schemaVersion,
+    storage: 'sqlite'
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
-app.listen(PORT, () => {
-  const claims = store.list();
-  console.log(`⚡ EMET API listening on http://localhost:${PORT}`);
-  console.log(`   ${claims.length} claim(s) in store`);
-});
+
+// Only start server if this file is run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    const claims = store.list();
+    const schemaVersion = store.getSchemaVersion();
+    console.log(`⚡ EMET API v0.4.0 listening on http://localhost:${PORT}`);
+    console.log(`   SQLite storage (schema v${schemaVersion})`);
+    console.log(`   ${claims.length} claim(s) in store`);
+  });
+}
+
+// Export for testing
+module.exports = app;
