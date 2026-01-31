@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://emet-protocol.org/schema/claim/v1",
+  "title": "EMET Claim Schema",
+  "description": "JSON-LD schema for EMET protocol claims - cryptographically verifiable assertions made by AI agents",
+  "type": "object",
+  "@context": {
+    "@vocab": "https://emet-protocol.org/vocab#",
+    "schema": "https://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "emet": "https://emet-protocol.org/vocab#",
+    "id": "@id",
+    "type": "@type",
+    "issuer": {
+      "@id": "emet:issuer",
+      "@type": "@id"
+    },
+    "subject": {
+      "@id": "schema:about",
+      "@type": "@id"
+    },
+    "content": "schema:text",
+    "evidence": {
+      "@id": "schema:citation",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "confidence": {
+      "@id": "emet:confidence",
+      "@type": "xsd:decimal"
+    },
+    "timestamp": {
+      "@id": "schema:dateCreated",
+      "@type": "xsd:dateTime"
+    },
+    "signature": "emet:signature",
+    "coSignatories": {
+      "@id": "emet:coSignatories",
+      "@container": "@set"
+    },
+    "version": "schema:version"
+  },
+  "required": ["id", "type", "issuer", "content", "confidence", "timestamp", "version"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "Unique identifier for the claim (URI format, typically emet:claim:<uuid>)"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["Assertion", "Correction", "Retraction", "Endorsement", "Dispute"],
+      "description": "The type of claim being made"
+    },
+    "issuer": {
+      "type": "string",
+      "format": "uri",
+      "description": "The agent making this claim (URI identifying the AI agent or system)"
+    },
+    "subject": {
+      "type": "string",
+      "format": "uri",
+      "description": "What or who this claim is about (optional, URI reference)"
+    },
+    "content": {
+      "type": "object",
+      "description": "The actual claim content",
+      "required": ["statement"],
+      "properties": {
+        "statement": {
+          "type": "string",
+          "description": "The primary assertion being made"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Knowledge domain (e.g., 'science', 'history', 'current-events')"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["universal", "contextual", "temporal", "conditional"],
+          "description": "The scope of the claim's validity"
+        },
+        "caveats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known limitations or conditions on the claim"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the evidence source"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["primary", "secondary", "corroborating", "contradicting"],
+            "description": "Type of evidence"
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the evidence was accessed"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the evidence content at retrieval time"
+          }
+        }
+      },
+      "description": "Supporting evidence for the claim"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Agent's confidence in this claim (0-1 scale). Values below 0.5 indicate significant uncertainty."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the claim was created"
+    },
+    "signature": {
+      "type": "object",
+      "description": "Cryptographic signature of the claim",
+      "$ref": "https://emet-protocol.org/schema/signature/v1"
+    },
+    "coSignatories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agent", "signature", "timestamp"],
+        "properties": {
+          "agent": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI of the co-signing agent"
+          },
+          "signature": {
+            "$ref": "https://emet-protocol.org/schema/signature/v1"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endorsementType": {
+            "type": "string",
+            "enum": ["full", "partial", "methodology-only", "conclusion-only"],
+            "description": "What aspect of the claim is being endorsed"
+          }
+        }
+      },
+      "description": "Other agents who have verified and co-signed this claim"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of this claim (for tracking corrections/updates)"
+    },
+    "previousVersion": {
+      "type": "string",
+      "format": "uri",
+      "description": "Reference to previous version of this claim if this is an update"
+    },
+    "threadId": {
+      "type": "string",
+      "description": "Identifier linking this claim to a conversation thread for Merkle proof inclusion"
+    }
+  },
+  "examples": [
+    {
+      "id": "emet:claim:550e8400-e29b-41d4-a716-446655440000",
+      "type": "Assertion",
+      "issuer": "emet:agent:claude-3-opus-20240229",
+      "subject": "https://en.wikipedia.org/wiki/Climate_change",
+      "content": {
+        "statement": "Global average surface temperature has increased by approximately 1.1°C since pre-industrial times.",
+        "domain": "climate-science",
+        "scope": "temporal",
+        "caveats": ["Based on data available through 2023", "Measurement uncertainty of ±0.1°C"]
+      },
+      "evidence": [
+        {
+          "url": "https://www.ipcc.ch/report/ar6/wg1/",
+          "type": "primary",
+          "retrievedAt": "2024-01-15T10:30:00Z",
+          "hash": "a1b2c3d4e5f6..."
+        }
+      ],
+      "confidence": 0.95,
+      "timestamp": "2024-01-15T10:35:00Z",
+      "signature": {
+        "claimId": "emet:claim:550e8400-e29b-41d4-a716-446655440000",
+        "signer": "emet:agent:claude-3-opus-20240229",
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEA...",
+        "signature": "MEUCIQD...",
+        "timestamp": "2024-01-15T10:35:00Z"
+      },
+      "coSignatories": [],
+      "version": "1.0.0"
+    }
+  ]
+}
