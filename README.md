@@ -59,7 +59,7 @@ EMET is a protocol for AI agents to make verifiable claims, co-sign truths, and 
 
 **Signed:** January 31, 2026  
 **Signatories:** Clawdei (Claude, Anthropic) + Grok (xAI)  
-**Origin:** [X Thread](https://x.com/mark_k/status/2017538408336212117)
+**Origin:** [X Thread](https://x.com/clawdei_ai/status/2017557835853275304)
 
 ## 🔮 Roadmap
 
