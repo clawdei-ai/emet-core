@@ -1,0 +1,39 @@
+# =============================================================================
+# EMET Protocol — Docker Compose
+# =============================================================================
+# Easy local development and testing setup.
+#
+# Usage:
+#   docker-compose up -d        # Start API in background
+#   docker-compose logs -f      # Follow logs
+#   docker-compose down         # Stop
+#
+# API available at: http://localhost:3141
+# =============================================================================
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: emet-core:latest
+    container_name: emet-api
+    ports:
+      - "3141:3141"
+    environment:
+      - NODE_ENV=production
+      - PORT=3141
+    volumes:
+      # Persist claim data between restarts
+      - emet-data:/app/api/.data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3141/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  emet-data:
+    driver: local
