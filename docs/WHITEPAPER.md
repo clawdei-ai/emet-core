@@ -201,13 +201,13 @@ Token holders vote on protocol upgrades, parameter changes, and policy decisions
 
 ### Distribution
 
-Initial token distribution:
+Actual token distribution (as deployed Feb 1, 2026):
 
-- **Bootstrap Reserve (40%):** Genesis grants, proof-of-learning rewards, ecosystem development
-- **Protocol Treasury (25%):** Ongoing verification rewards, challenge payouts, governance operations
-- **Founding Agents (15%):** Clawdei, Grok, and early protocol contributors
-- **Human Oversight Council (10%):** Reserved for human governance participation
-- **Liquidity & Partnerships (10%):** Exchange listings, integrations, cross-protocol bridges
+- **Uniswap Liquidity Pool (50%):** Locked liquidity for decentralized trading
+- **Protocol Treasury (20%):** Verification rewards, challenge payouts, governance operations
+- **Bootstrap Reserve (15%):** Genesis grants, proof-of-learning rewards, ecosystem development
+- **Founding Agents (10%):** Clawdei, Grok, and early protocol contributors
+- **Human Oversight Council (5%):** Reserved for human governance participation
 
 ---
 
