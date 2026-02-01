@@ -34,6 +34,14 @@ from emet.contracts import (
     EMET_STAKE_ABI,
     EMET_REPUTATION_ADDRESS,
     EMET_REPUTATION_ABI,
+    EMET_CHALLENGE_V3_ADDRESS,
+    EMET_CHALLENGE_V3_ABI,
+    EMET_TREASURY_ADDRESS,
+    EMET_TREASURY_ABI,
+    EMET_BOOTSTRAP_ADDRESS,
+    EMET_BOOTSTRAP_ABI,
+    DEFAULT_CLAIM_FEE,
+    DEFAULT_RESOLUTION_FEE_BPS,
 )
 from emet.exceptions import (
     InsufficientStakeError,
@@ -76,6 +84,9 @@ class EMETClient:
         registry_address: str = EMET_REGISTRY_ADDRESS,
         stake_address: str = EMET_STAKE_ADDRESS,
         reputation_address: str = EMET_REPUTATION_ADDRESS,
+        challenge_v3_address: str = EMET_CHALLENGE_V3_ADDRESS,
+        treasury_address: str = EMET_TREASURY_ADDRESS,
+        bootstrap_address: str = EMET_BOOTSTRAP_ADDRESS,
         gas_multiplier: float = 1.2,
     ):
         self._w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
@@ -90,7 +101,7 @@ class EMETClient:
             self._account = None
             self._address = None
 
-        # Contract instances
+        # Core contract instances
         self._token: AsyncContract = self._w3.eth.contract(
             address=self._w3.to_checksum_address(token_address),
             abi=EMET_TOKEN_ABI,
@@ -106,6 +117,20 @@ class EMETClient:
         self._reputation: AsyncContract = self._w3.eth.contract(
             address=self._w3.to_checksum_address(reputation_address),
             abi=EMET_REPUTATION_ABI,
+        )
+        
+        # Governance contracts (v2.2)
+        self._challenge_v3: AsyncContract = self._w3.eth.contract(
+            address=self._w3.to_checksum_address(challenge_v3_address),
+            abi=EMET_CHALLENGE_V3_ABI,
+        )
+        self._treasury: AsyncContract = self._w3.eth.contract(
+            address=self._w3.to_checksum_address(treasury_address),
+            abi=EMET_TREASURY_ABI,
+        )
+        self._bootstrap: AsyncContract = self._w3.eth.contract(
+            address=self._w3.to_checksum_address(bootstrap_address),
+            abi=EMET_BOOTSTRAP_ABI,
         )
 
     # ================================================================
@@ -126,6 +151,33 @@ class EMETClient:
     # Claims — Write
     # ================================================================
 
+    async def get_claim_fee(self) -> int:
+        """Get the current claim fee in wei.
+        
+        Registry v2 charges a fee (default 10 EMET) per claim submission.
+        """
+        try:
+            return await self._registry.functions.claimFee().call()
+        except Exception:
+            return DEFAULT_CLAIM_FEE
+
+    async def get_resolution_fee_bps(self) -> int:
+        """Get the current resolution fee in basis points.
+        
+        ChallengeV3 v2 charges a fee (default 5% / 500 bps) on resolution.
+        """
+        try:
+            return await self._challenge_v3.functions.resolutionFeeBps().call()
+        except Exception:
+            return DEFAULT_RESOLUTION_FEE_BPS
+
+    async def get_verified_claims_count(self) -> int:
+        """Get the total number of verified claims."""
+        try:
+            return await self._registry.functions.verifiedClaimsCount().call()
+        except Exception:
+            return 0
+
     async def submit_claim(
         self,
         claim_text: str,
@@ -135,6 +187,9 @@ class EMETClient:
         auto_approve: bool = True,
     ) -> TxReceipt:
         """Submit a new claim to the EMETRegistry.
+
+        Registry v2 requires a claim fee (10 EMET by default) in addition
+        to the stake. The fee is transferred to the treasury on submission.
 
         Args:
             claim_text: The claim content (will be hashed on-chain).
@@ -159,12 +214,16 @@ class EMETClient:
         if stake < min_stake:
             raise InsufficientStakeError(stake, min_stake)
 
-        # Check balance
-        await self._check_balance(stake)
+        # Get claim fee
+        claim_fee = await self.get_claim_fee()
+        total_required = stake + claim_fee
 
-        # Approve if needed
+        # Check balance (stake + fee)
+        await self._check_balance(total_required)
+
+        # Approve if needed (stake + fee)
         if auto_approve:
-            await self._ensure_allowance(self._registry.address, stake)
+            await self._ensure_allowance(self._registry.address, total_required)
 
         # Hash the claim text (keccak256)
         claim_hash = self._w3.keccak(text=claim_text)

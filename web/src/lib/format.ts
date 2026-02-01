@@ -1,5 +1,18 @@
 import { formatUnits } from 'viem';
 
+/**
+ * Validate URL is safe to render as a link (XSS prevention).
+ * Only allows https:, http:, and ipfs: protocols.
+ */
+export function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ['https:', 'http:', 'ipfs:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
 export function formatEMET(value: bigint, decimals = 18): string {
   const num = Number(formatUnits(value, decimals));
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;

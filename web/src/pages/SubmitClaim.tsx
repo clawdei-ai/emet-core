@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { parseUnits } from 'viem';
 import { useSubmitClaim, useApproveEMET, useMinimumStake, useTokenBalance, useTokenAllowance } from '../hooks/useProtocol';
 import { CONTRACTS } from '../contracts/addresses';
-import { formatEMET } from '../lib/format';
+import { formatEMET, isSafeUrl } from '../lib/format';
 
 export function SubmitClaim() {
   const { address, isConnected } = useAccount();
@@ -11,6 +11,7 @@ export function SubmitClaim() {
   const [evidenceURL, setEvidenceURL] = useState('');
   const [stakeAmount, setStakeAmount] = useState('100');
   const [step, setStep] = useState<'form' | 'approve' | 'submit' | 'done'>('form');
+  const [urlError, setUrlError] = useState('');
 
   const { data: minStake } = useMinimumStake();
   const { data: balance } = useTokenBalance(address);
@@ -34,10 +35,18 @@ export function SubmitClaim() {
 
   const stakeWei = stakeAmount ? parseUnits(stakeAmount, 18) : 0n;
   const needsApproval = allowance !== undefined && stakeWei > allowance;
+  const hasInsufficientBalance = balance !== undefined && stakeWei > balance;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!claimText || !evidenceURL || !stakeAmount) return;
+
+    // Validate evidence URL protocol
+    if (!isSafeUrl(evidenceURL)) {
+      setUrlError('Evidence URL must use https://, http://, or ipfs:// protocol');
+      return;
+    }
+    setUrlError('');
 
     if (needsApproval) {
       setStep('approve');
@@ -103,10 +112,14 @@ export function SubmitClaim() {
           <input
             type="url"
             value={evidenceURL}
-            onChange={(e) => setEvidenceURL(e.target.value)}
+            onChange={(e) => {
+              setEvidenceURL(e.target.value);
+              setUrlError('');
+            }}
             placeholder="https://... or ipfs://..."
             required
           />
+          {urlError && <p className="form-error">{urlError}</p>}
           <small>
             Link to evidence. <strong>Tip:</strong> Include the full claim text in your evidence document 
             so others can verify the hash. Create a <a href="https://gist.github.com" target="_blank" rel="noreferrer">GitHub Gist</a> or 
@@ -146,8 +159,16 @@ export function SubmitClaim() {
             {submitConfirming && <p>⏳ Confirming on Base...</p>}
           </div>
         ) : (
-          <button type="submit" className="btn btn-primary btn-full">
-            {needsApproval ? 'Approve & Submit' : 'Submit Claim'}
+          <button
+            type="submit"
+            className="btn btn-primary btn-full"
+            disabled={hasInsufficientBalance}
+          >
+            {hasInsufficientBalance
+              ? 'Insufficient EMET Balance'
+              : needsApproval
+              ? 'Approve & Submit'
+              : 'Submit Claim'}
           </button>
         )}
       </form>

@@ -1,19 +1,19 @@
 {
   "chain": "base",
   "chainId": 8453,
-  "timestamp": "2026-02-01T19:45:00Z",
-  "version": "2.1",
+  "timestamp": "2026-02-12T14:00:00Z",
+  "version": "2.2",
   "deployer": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
   "contracts": {
     "core": {
       "EMETToken": "0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C",
-      "EMETRegistry": "0x69FC0F525F15DFB57e762cD2c570114433AFc6e2",
+      "EMETRegistry": "0x266D8343463deE2920CBE97EfB72B4540E491DeC",
       "EMETStake": "0xb4A3Cf08194E445db65862Fb92bbC0cE587345bb",
       "EMETSignature": "0x6E5A8eF99D294a381bf4D0b0e27B95aFc293e074"
     },
     "governance": {
-      "EMETChallengeV3": "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332",
-      "EMETJuryPool": "0xDBa7434180e09c9b0857d5808a227E32E1c79bD8",
+      "EMETChallengeV3": "0x697BAC4b1FCA88e12003C0ef3E03bdcbdE5d17D9",
+      "EMETJuryPool": "0x018377D4e725703974A0087f8Ca8066c4aE8b045",
       "EMETJurorStake": "0x3f672390BeDac73eaCa3136552dB1197654DE20F",
       "EMETHumanOracle": "0x017eEA4fad7dC4fb26E260B4e91354F722F6B61E"
     },
@@ -28,29 +28,43 @@
     },
     "economic": {
       "EMETTreasury": "0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502",
-      "EMETChallengeV2": "0x6F42c2F75aDB5e25018Ef7822E94DA3Df37E5B5A",
       "EMETWhistleblower": "0xaa57c2cB96cceD9A56D238F2d1F9814a31CA8a26"
+    },
+    "legacy": {
+      "EMETRegistry_v1": "0x69FC0F525F15DFB57e762cD2c570114433AFc6e2",
+      "EMETChallengeV2": "0x6F42c2F75aDB5e25018Ef7822E94DA3Df37E5B5A",
+      "EMETChallengeV3_v1": "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332",
+      "EMETJuryPool_v1": "0xDBa7434180e09c9b0857d5808a227E32E1c79bD8"
     }
   },
   "wiring": {
-    "JuryPool.challengeContract": "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332",
+    "Registry.challengeContract": "0x697BAC4b1FCA88e12003C0ef3E03bdcbdE5d17D9",
+    "JuryPool.challengeContract": "0x697BAC4b1FCA88e12003C0ef3E03bdcbdE5d17D9 (JuryPool v2 properly wired to ChallengeV3 v2)",
     "Concentration.updater": "0xb4A3Cf08194E445db65862Fb92bbC0cE587345bb",
     "SybilResistance.authorizedCallers": [
       "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e",
       "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332"
     ],
-    "ChallengeV3.registry": "0x69FC0F525F15DFB57e762cD2c570114433AFc6e2",
+    "ChallengeV3.registry": "0x266D8343463deE2920CBE97EfB72B4540E491DeC",
     "ChallengeV3.treasury": "0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502",
     "ChallengeV3.reputation": "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e",
     "ChallengeV3.juryPool": "0xDBa7434180e09c9b0857d5808a227E32E1c79bD8",
-    "JurorStake.challengeContract": "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332",
-    "Decay.registry": "0x69FC0F525F15DFB57e762cD2c570114433AFc6e2"
+    "JurorStake.challengeContract": "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332 (STALE - points to legacy ChallengeV3_v1)",
+    "Decay.registry": "0x69FC0F525F15DFB57e762cD2c570114433AFc6e2 (STALE - points to legacy Registry_v1)"
   },
   "knownIssues": {
-    "Stake.challengeContract": "Points to ChallengeV2 (0x6F42c2F75aDB5e25018Ef7822E94DA3Df37E5B5A), not ChallengeV3. One-shot setter, cannot be changed. V3 operates independently via JurorStake."
+    "Stake.challengeContract": "Points to ChallengeV2 (0x6F42c2F75aDB5e25018Ef7822E94DA3Df37E5B5A), not ChallengeV3. One-shot setter, cannot be changed.",
+    "JuryPool_v1.challengeContract": "Legacy JuryPool points to legacy ChallengeV3_v1. Superseded by JuryPool v2 (0x018377D4e725703974A0087f8Ca8066c4aE8b045).",
+    "ChallengeV3_v2.juryPool": "ChallengeV3 v2 (0x697BAC4b1FCA88e12003C0ef3E03bdcbdE5d17D9) has immutable reference to OLD JuryPool_v1. To use new JuryPool v2, need ChallengeV3 v3 deployment.",
+    "JurorStake.challengeContract": "Points to legacy ChallengeV3_v1. Same one-shot issue.",
+    "Decay.registry": "Points to legacy Registry_v1. Would need redeployment to use new Registry."
+  },
+  "fees": {
+    "Registry.claimFee": "10 EMET (DEFAULT_CLAIM_FEE, set in constructor)",
+    "ChallengeV3.resolutionFeeBps": "500 (5%, DEFAULT_RESOLUTION_FEE_BPS)"
   },
   "notDeployed": ["EMETPrecedent", "EMETLPRewards"],
   "uniswapPool": "0x0C7f51B0dB3e319736c979EBD38687cff521086A",
   "testCount": 401,
-  "contractCount": 18
+  "contractCount": 20
 }

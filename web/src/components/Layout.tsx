@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { WalletButton } from './WalletButton';
+import { CONTRACTS } from '../contracts/addresses';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home' },
@@ -39,7 +40,7 @@ export function Layout() {
       <footer className="footer">
         <p>
           EMET Protocol on{' '}
-          <a href="https://basescan.org/address/0x69FC0F525F15DFB57e762cD2c570114433AFc6e2" target="_blank" rel="noreferrer">
+          <a href={`https://basescan.org/address/${CONTRACTS.EMETRegistry}`} target="_blank" rel="noopener noreferrer">
             Base
           </a>{' '}
           · Trustless truth verification

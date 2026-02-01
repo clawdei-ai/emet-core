@@ -10,6 +10,8 @@ import {
   ABIS,
   DEFAULT_RPC,
   CHAIN_ID,
+  DEFAULT_CLAIM_FEE,
+  DEFAULT_RESOLUTION_FEE_BPS,
   ClaimStatus,
   ClaimStatusName,
   ChallengeStatus,
@@ -65,6 +67,7 @@ export class EMETClient {
   _initContracts() {
     const signerOrProvider = this.signer || this.provider;
     
+    // Core contracts
     this.token = new ethers.Contract(
       ADDRESSES.EMETToken,
       ABIS.EMETToken,
@@ -83,15 +86,33 @@ export class EMETClient {
       signerOrProvider
     );
     
-    this.challenge = new ethers.Contract(
-      ADDRESSES.EMETChallenge,
-      ABIS.EMETChallenge,
+    // ChallengeV3 v2 (current)
+    this.challengeV3 = new ethers.Contract(
+      ADDRESSES.EMETChallengeV3,
+      ABIS.EMETChallengeV3,
       signerOrProvider
     );
     
-    // Future contracts (will be null until deployed)
+    // Legacy challenge (for backwards compatibility)
+    this.challenge = ADDRESSES.EMETChallenge 
+      ? new ethers.Contract(ADDRESSES.EMETChallenge, ABIS.EMETChallenge, signerOrProvider)
+      : null;
+    
+    // Trust & Governance contracts
     this.reputation = ADDRESSES.EMETReputation 
       ? new ethers.Contract(ADDRESSES.EMETReputation, ABIS.EMETReputation, signerOrProvider)
+      : null;
+    
+    this.treasury = ADDRESSES.EMETTreasury
+      ? new ethers.Contract(ADDRESSES.EMETTreasury, ABIS.EMETTreasury, signerOrProvider)
+      : null;
+    
+    this.juryPool = ADDRESSES.EMETJuryPool
+      ? new ethers.Contract(ADDRESSES.EMETJuryPool, ABIS.EMETJuryPool, signerOrProvider)
+      : null;
+    
+    this.bootstrap = ADDRESSES.EMETBootstrap
+      ? new ethers.Contract(ADDRESSES.EMETBootstrap, ABIS.EMETBootstrap, signerOrProvider)
       : null;
   }
 
@@ -189,16 +210,77 @@ export class EMETClient {
   }
 
   // =========================================================================
+  // Fee Operations
+  // =========================================================================
+
+  /**
+   * Get the current claim fee
+   * @returns {Promise<{raw: bigint, formatted: string}>}
+   */
+  async getClaimFee() {
+    try {
+      const fee = await this.registry.claimFee();
+      return {
+        raw: fee,
+        formatted: ethers.formatUnits(fee, 18)
+      };
+    } catch (e) {
+      // Fallback to default if not available
+      return {
+        raw: ethers.parseUnits(DEFAULT_CLAIM_FEE, 18),
+        formatted: DEFAULT_CLAIM_FEE
+      };
+    }
+  }
+
+  /**
+   * Get the current resolution fee in basis points
+   * @returns {Promise<{bps: number, percentage: string}>}
+   */
+  async getResolutionFee() {
+    try {
+      const feeBps = await this.challengeV3.resolutionFeeBps();
+      return {
+        bps: Number(feeBps),
+        percentage: `${Number(feeBps) / 100}%`
+      };
+    } catch (e) {
+      // Fallback to default
+      return {
+        bps: DEFAULT_RESOLUTION_FEE_BPS,
+        percentage: `${DEFAULT_RESOLUTION_FEE_BPS / 100}%`
+      };
+    }
+  }
+
+  /**
+   * Get the verified claims count
+   * @returns {Promise<number>}
+   */
+  async getVerifiedClaimsCount() {
+    try {
+      const count = await this.registry.verifiedClaimsCount();
+      return Number(count);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // =========================================================================
   // Claim Operations
   // =========================================================================
 
   /**
    * Submit a new claim
+   * 
+   * Registry v2 requires a claim fee (10 EMET by default) in addition to the stake.
+   * The fee is transferred to the treasury on submission.
+   * 
    * @param {string} content - The claim text
    * @param {Object} options
    * @param {number|string} options.stake - Stake amount in EMET
    * @param {string} [options.evidence] - Evidence URL
-   * @returns {Promise<{claimId: number, txHash: string, receipt: ethers.TransactionReceipt}>}
+   * @returns {Promise<{claimId: number, txHash: string, receipt: ethers.TransactionReceipt, fee: string}>}
    */
   async submitClaim(content, options = {}) {
     this._requireSigner();
@@ -209,11 +291,18 @@ export class EMETClient {
     const decimals = await this.token.decimals();
     const stakeWei = ethers.parseUnits(stake.toString(), decimals);
     
-    // Ensure allowance
-    await this._ensureAllowance(ADDRESSES.EMETRegistry, stakeWei);
+    // Get current claim fee
+    const claimFee = await this.getClaimFee();
+    const totalRequired = stakeWei + claimFee.raw;
     
-    // Submit claim
-    const tx = await this.registry.submitClaim(content, evidence, stakeWei);
+    // Ensure allowance for stake + fee
+    await this._ensureAllowance(ADDRESSES.EMETRegistry, totalRequired);
+    
+    // Hash the claim content (keccak256)
+    const claimHash = ethers.keccak256(ethers.toUtf8Bytes(content));
+    
+    // Submit claim with hash, evidence URI, and stake
+    const tx = await this.registry.submitClaim(claimHash, evidence, stakeWei);
     const receipt = await tx.wait();
     
     // Parse ClaimSubmitted event to get claimId
@@ -236,7 +325,8 @@ export class EMETClient {
     return {
       claimId,
       txHash: receipt.hash,
-      receipt
+      receipt,
+      fee: claimFee.formatted
     };
   }
 
@@ -453,18 +543,22 @@ export class EMETClient {
   }
 
   // =========================================================================
-  // Challenge Operations
+  // Challenge Operations (ChallengeV3 v2)
   // =========================================================================
 
   /**
-   * Challenge a claim
+   * Initiate a challenge against a claim
+   * 
+   * ChallengeV3 v2 includes a resolution fee (5% / 500 bps) that is
+   * deducted from the losing party's stake when the challenge resolves.
+   * 
    * @param {number} claimId
    * @param {Object} options
    * @param {string} options.evidence - Evidence URL
    * @param {number|string} options.stake - Stake amount
    * @returns {Promise<{txHash: string, receipt: ethers.TransactionReceipt}>}
    */
-  async challenge(claimId, options = {}) {
+  async initiateChallenge(claimId, options = {}) {
     this._requireSigner();
     
     const evidence = options.evidence || '';
@@ -473,23 +567,50 @@ export class EMETClient {
     const decimals = await this.token.decimals();
     const stakeWei = ethers.parseUnits(stake.toString(), decimals);
     
-    // Ensure allowance
-    await this._ensureAllowance(ADDRESSES.EMETChallenge, stakeWei);
+    // Ensure allowance for ChallengeV3
+    await this._ensureAllowance(ADDRESSES.EMETChallengeV3, stakeWei);
     
-    const tx = await this.challenge.challenge(claimId, evidence, stakeWei);
+    const tx = await this.challengeV3.initiateChallenge(claimId, evidence, stakeWei);
     const receipt = await tx.wait();
     
     return { txHash: receipt.hash, receipt };
   }
 
   /**
-   * Get challenge info for a claim
+   * Challenge a claim (alias for initiateChallenge)
+   * @deprecated Use initiateChallenge instead
+   */
+  async challenge(claimId, options = {}) {
+    return this.initiateChallenge(claimId, options);
+  }
+
+  /**
+   * Cast a vote on a challenge
    * @param {number} claimId
-   * @returns {Promise<Object>}
+   * @param {boolean} supportChallenge - True to support the challenger, false to support the claim
+   * @returns {Promise<{txHash: string, receipt: ethers.TransactionReceipt}>}
+   */
+  async castVote(claimId, supportChallenge) {
+    this._requireSigner();
+    
+    const tx = await this.challengeV3.castVote(claimId, supportChallenge);
+    const receipt = await tx.wait();
+    
+    return { txHash: receipt.hash, receipt };
+  }
+
+  /**
+   * Get challenge info for a claim (ChallengeV3)
+   * @param {number} claimId
+   * @returns {Promise<Object|null>}
    */
   async getChallenge(claimId) {
     try {
-      const challenge = await this.challenge.challenges(claimId);
+      // Check if challenge exists first
+      const exists = await this.challengeV3.challengeExists(claimId);
+      if (!exists) return null;
+      
+      const challenge = await this.challengeV3.challenges(claimId);
       
       return {
         claimId,
@@ -499,12 +620,26 @@ export class EMETClient {
           raw: challenge[2] || challenge.stake,
           formatted: ethers.formatUnits(challenge[2] || challenge.stake, 18)
         },
-        timestamp: Number(challenge[3] || challenge.timestamp),
-        status: Number(challenge[4] || challenge.status),
-        statusName: ChallengeStatusName[Number(challenge[4] || challenge.status)] || 'Unknown'
+        voteStart: Number(challenge[3] || challenge.voteStart),
+        voteEnd: Number(challenge[4] || challenge.voteEnd),
+        status: Number(challenge[5] || challenge.status),
+        statusName: ChallengeStatusName[Number(challenge[5] || challenge.status)] || 'Unknown'
       };
     } catch (err) {
       return null;
+    }
+  }
+
+  /**
+   * Check if a challenge exists for a claim
+   * @param {number} claimId
+   * @returns {Promise<boolean>}
+   */
+  async challengeExists(claimId) {
+    try {
+      return await this.challengeV3.challengeExists(claimId);
+    } catch (err) {
+      return false;
     }
   }
 
@@ -515,42 +650,47 @@ export class EMETClient {
    */
   async canResolveChallenge(claimId) {
     try {
-      return await this.challenge.canResolve(claimId);
+      return await this.challengeV3.canResolve(claimId);
     } catch (err) {
       return false;
     }
   }
 
   /**
-   * Resolve a challenge (requires appropriate permissions)
+   * Resolve a challenge
+   * Anyone can call this after the voting period ends.
+   * Resolution fee (5%) is deducted from the losing party's stake.
+   * 
    * @param {number} claimId
-   * @param {boolean} [challengeSucceeded=true]
    * @returns {Promise<{txHash: string, receipt: ethers.TransactionReceipt}>}
    */
-  async resolveChallenge(claimId, challengeSucceeded = true) {
+  async resolveChallenge(claimId) {
     this._requireSigner();
     
-    const tx = await this.challenge.resolveChallenge(claimId, challengeSucceeded);
+    const tx = await this.challengeV3.resolve(claimId);
     const receipt = await tx.wait();
     
     return { txHash: receipt.hash, receipt };
   }
 
   // =========================================================================
-  // Reputation Operations (stub)
+  // Reputation Operations
   // =========================================================================
 
   /**
-   * Get reputation for an address (stub - contract not yet deployed)
+   * Get reputation for an address
    * @param {string} [address]
-   * @returns {Promise<{score: number, available: boolean}>}
+   * @returns {Promise<{score: number, multiplier: number, tier: string, isPositive: boolean, available: boolean}>}
    */
   async getReputation(address) {
     if (!this.reputation) {
       return {
         score: 0,
+        multiplier: 1,
+        tier: 'Unknown',
+        isPositive: false,
         available: false,
-        message: 'Reputation contract not yet deployed'
+        message: 'Reputation contract not available'
       };
     }
     
@@ -559,10 +699,130 @@ export class EMETClient {
       throw new Error('Address required');
     }
     
-    const score = await this.reputation.reputation(targetAddress);
+    try {
+      const [score, multiplierRaw, isPositive, tier] = await Promise.all([
+        this.reputation.getReputation(targetAddress),
+        this.reputation.getReputationMultiplier(targetAddress),
+        this.reputation.hasPositiveReputation(targetAddress),
+        this.reputation.getReputationTier(targetAddress)
+      ]);
+      
+      return {
+        score: Number(score),
+        multiplier: Number(multiplierRaw) / 1e18,
+        tier,
+        isPositive,
+        available: true
+      };
+    } catch (err) {
+      return {
+        score: 0,
+        multiplier: 1,
+        tier: 'Unknown',
+        isPositive: false,
+        available: false,
+        error: err.message
+      };
+    }
+  }
+
+  // =========================================================================
+  // Bootstrap Operations
+  // =========================================================================
+
+  /**
+   * Claim bootstrap tokens (one-time per address)
+   * @returns {Promise<{txHash: string, receipt: ethers.TransactionReceipt}>}
+   */
+  async claimBootstrapTokens() {
+    this._requireSigner();
+    
+    if (!this.bootstrap) {
+      throw new Error('Bootstrap contract not available');
+    }
+    
+    const address = await this.getAddress();
+    const hasClaimed = await this.bootstrap.hasClaimed(address);
+    if (hasClaimed) {
+      throw new Error('Bootstrap tokens already claimed');
+    }
+    
+    const tx = await this.bootstrap.claimBootstrapTokens();
+    const receipt = await tx.wait();
+    
+    return { txHash: receipt.hash, receipt };
+  }
+
+  /**
+   * Check if an address has claimed bootstrap tokens
+   * @param {string} [address]
+   * @returns {Promise<boolean>}
+   */
+  async hasClaimedBootstrap(address) {
+    if (!this.bootstrap) return false;
+    
+    const targetAddress = address || (this.signer ? await this.signer.getAddress() : null);
+    if (!targetAddress) return false;
+    
+    return await this.bootstrap.hasClaimed(targetAddress);
+  }
+
+  /**
+   * Get bootstrap amount
+   * @returns {Promise<{raw: bigint, formatted: string}>}
+   */
+  async getBootstrapAmount() {
+    if (!this.bootstrap) {
+      return { raw: 0n, formatted: '0' };
+    }
+    
+    const amount = await this.bootstrap.boostrapAmount();
     return {
-      score: Number(score),
-      available: true
+      raw: amount,
+      formatted: ethers.formatUnits(amount, 18)
+    };
+  }
+
+  // =========================================================================
+  // Jury Pool Operations
+  // =========================================================================
+
+  /**
+   * Check if an address is a juror
+   * @param {string} [address]
+   * @returns {Promise<boolean>}
+   */
+  async isJuror(address) {
+    if (!this.juryPool) return false;
+    
+    const targetAddress = address || (this.signer ? await this.signer.getAddress() : null);
+    if (!targetAddress) return false;
+    
+    return await this.juryPool.isJuror(targetAddress);
+  }
+
+  /**
+   * Get the total number of jurors
+   * @returns {Promise<number>}
+   */
+  async getJurorCount() {
+    if (!this.juryPool) return 0;
+    return Number(await this.juryPool.getJurorCount());
+  }
+
+  /**
+   * Get the minimum stake required to be a juror
+   * @returns {Promise<{raw: bigint, formatted: string}>}
+   */
+  async getMinimumJurorStake() {
+    if (!this.juryPool) {
+      return { raw: 0n, formatted: '0' };
+    }
+    
+    const amount = await this.juryPool.minimumStakeToBeJuror();
+    return {
+      raw: amount,
+      formatted: ethers.formatUnits(amount, 18)
     };
   }
 

@@ -1,8 +1,24 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { parseUnits } from 'viem';
-import { useInitiateChallenge, useApproveEMET, useTokenAllowance } from '../hooks/useProtocol';
+import { useInitiateChallenge, useApproveEMET, useTokenAllowance, useTokenBalance } from '../hooks/useProtocol';
 import { CONTRACTS } from '../contracts/addresses';
+
+/**
+ * Map raw error messages to user-friendly messages.
+ * Prevents disclosure of internal error details.
+ */
+function getErrorMessage(error: Error | null): string {
+  if (!error) return '';
+  const msg = error.message?.toLowerCase() || '';
+  if (msg.includes('user rejected') || msg.includes('user denied')) {
+    return 'Transaction cancelled';
+  }
+  if (msg.includes('insufficient')) {
+    return 'Insufficient EMET balance';
+  }
+  return 'Transaction failed. Please try again.';
+}
 
 interface ChallengeFormProps {
   claimId: bigint;
@@ -18,9 +34,11 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
   const challengeHook = useInitiateChallenge();
   const approveHook = useApproveEMET();
   const { data: allowance } = useTokenAllowance(address, CONTRACTS.EMETChallengeV3 || CONTRACTS.EMETChallenge);
+  const { data: balance } = useTokenBalance(address);
 
   const stakeWei = stakeAmount ? parseUnits(stakeAmount, 18) : 0n;
   const needsApproval = allowance !== undefined && stakeWei > allowance;
+  const hasInsufficientBalance = balance !== undefined && stakeWei > balance;
 
   const handleSubmitChallenge = () => {
     if (!counterEvidence.trim()) return;
@@ -92,9 +110,13 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
       <button
         className="btn btn-danger btn-full"
         onClick={handleSubmitChallenge}
-        disabled={!counterEvidence.trim() || challengeHook.isPending || approveHook.isPending}
+        disabled={!counterEvidence.trim() || challengeHook.isPending || approveHook.isPending || hasInsufficientBalance}
       >
-        {needsApproval ? '🔓 Approve & Challenge' : '⚔️ Submit Challenge'}
+        {hasInsufficientBalance
+          ? 'Insufficient EMET Balance'
+          : needsApproval
+          ? '🔓 Approve & Challenge'
+          : '⚔️ Submit Challenge'}
       </button>
 
       {(approveHook.isPending || approveHook.isConfirming) && (
@@ -107,7 +129,7 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
         <p className="tx-status success">✓ Challenge submitted successfully!</p>
       )}
       {challengeHook.error && (
-        <p className="tx-status error">Failed: {(challengeHook.error as Error).message?.slice(0, 100)}</p>
+        <p className="tx-status error">{getErrorMessage(challengeHook.error as Error)}</p>
       )}
     </div>
   );

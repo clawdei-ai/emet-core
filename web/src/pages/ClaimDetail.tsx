@@ -10,7 +10,7 @@ import {
 import { CONTRACTS } from '../contracts/addresses';
 import { ClaimStateBadge } from '../components/ClaimStateBadge';
 import { ChallengeForm } from '../components/ChallengeForm';
-import { formatEMET, shortenAddress, timeAgo, timeRemaining, getClaimState, CLAIM_STATE_CONFIG } from '../lib/format';
+import { formatEMET, shortenAddress, timeAgo, timeRemaining, getClaimState, CLAIM_STATE_CONFIG, isSafeUrl } from '../lib/format';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -111,7 +111,7 @@ export function ClaimDetail() {
 
           <div className="detail-row">
             <span className="detail-label">Submitter</span>
-            <a href={`https://basescan.org/address/${c.submitter}`} target="_blank" rel="noreferrer">
+            <a href={`https://basescan.org/address/${c.submitter}`} target="_blank" rel="noopener noreferrer">
               {shortenAddress(c.submitter)}
             </a>
           </div>
@@ -121,9 +121,16 @@ export function ClaimDetail() {
           </div>
           <div className="detail-row">
             <span className="detail-label">Evidence</span>
-            <a href={c.evidenceURI} target="_blank" rel="noreferrer" className="evidence-link">
-              {c.evidenceURI.length > 50 ? c.evidenceURI.slice(0, 50) + '...' : c.evidenceURI}
-            </a>
+            {isSafeUrl(c.evidenceURI) ? (
+              <a href={c.evidenceURI} target="_blank" rel="noopener noreferrer" className="evidence-link">
+                {c.evidenceURI.length > 50 ? c.evidenceURI.slice(0, 50) + '...' : c.evidenceURI}
+              </a>
+            ) : (
+              <span className="unsafe-url">
+                ⚠️ {c.evidenceURI.length > 50 ? c.evidenceURI.slice(0, 50) + '...' : c.evidenceURI}
+                <small>(unsafe protocol)</small>
+              </span>
+            )}
           </div>
           <div className="detail-row">
             <span className="detail-label">Submitted</span>
@@ -171,7 +178,7 @@ export function ClaimDetail() {
               <div className="challenge-details">
                 <div className="detail-row">
                   <span className="detail-label">Challenger</span>
-                  <a href={`https://basescan.org/address/${challengeData![0]}`} target="_blank" rel="noreferrer">
+                  <a href={`https://basescan.org/address/${challengeData![0]}`} target="_blank" rel="noopener noreferrer">
                     {shortenAddress(challengeData![0])}
                   </a>
                 </div>

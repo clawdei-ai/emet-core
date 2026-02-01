@@ -10,7 +10,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import { EMETClient } from './client.js';
-import { ADDRESSES, ClaimStatusName, ChallengeStatusName } from './contracts.js';
+import { ADDRESSES, DEFAULT_CLAIM_FEE, DEFAULT_RESOLUTION_FEE_BPS, ClaimStatusName, ChallengeStatusName } from './contracts.js';
 
 // ============================================================================
 // Configuration
@@ -59,10 +59,13 @@ program
       const network = await client.getNetworkInfo();
       const tokenInfo = await client.getTokenInfo();
       const claimCount = await client.getClaimCount();
+      const verifiedCount = await client.getVerifiedClaimsCount();
+      const claimFee = await client.getClaimFee();
+      const resolutionFee = await client.getResolutionFee();
       
       spinner.stop();
       
-      console.log(chalk.bold('\n📊 EMET Protocol Status\n'));
+      console.log(chalk.bold('\n📊 EMET Protocol Status (v2.2)\n'));
       
       console.log(chalk.cyan('Network:'));
       console.log(`  Chain ID: ${network.chainId}`);
@@ -74,21 +77,33 @@ program
       console.log(`  Symbol: ${tokenInfo.symbol}`);
       console.log(`  Total Supply: ${tokenInfo.totalSupply}`);
       
-      console.log(chalk.cyan('\nContracts:'));
-      console.log(`  Token:     ${ADDRESSES.EMETToken}`);
-      console.log(`  Registry:  ${ADDRESSES.EMETRegistry}`);
-      console.log(`  Stake:     ${ADDRESSES.EMETStake}`);
-      console.log(`  Challenge: ${ADDRESSES.EMETChallenge}`);
+      console.log(chalk.cyan('\nContracts (v2.2):'));
+      console.log(`  Token:       ${ADDRESSES.EMETToken}`);
+      console.log(`  Registry:    ${ADDRESSES.EMETRegistry}`);
+      console.log(`  Stake:       ${ADDRESSES.EMETStake}`);
+      console.log(`  ChallengeV3: ${ADDRESSES.EMETChallengeV3}`);
+      console.log(`  JuryPool:    ${ADDRESSES.EMETJuryPool}`);
+      console.log(`  Treasury:    ${ADDRESSES.EMETTreasury}`);
+      console.log(`  Reputation:  ${ADDRESSES.EMETReputation}`);
+      
+      console.log(chalk.cyan('\nFees:'));
+      console.log(`  Claim Fee: ${claimFee.formatted} EMET per submission`);
+      console.log(`  Resolution Fee: ${resolutionFee.percentage} on challenge resolution`);
       
       console.log(chalk.cyan('\nStats:'));
       console.log(`  Total Claims: ${claimCount}`);
+      console.log(`  Verified Claims: ${verifiedCount}`);
       
       if (client.signer) {
         const address = await client.getAddress();
         const balance = await client.getBalance();
+        const reputation = await client.getReputation();
         console.log(chalk.cyan('\nWallet:'));
         console.log(`  Address: ${address}`);
         console.log(`  Balance: ${balance.formatted} EMET`);
+        if (reputation.available) {
+          console.log(`  Reputation: ${reputation.score} (${reputation.tier})`);
+        }
       }
       
       console.log('');
@@ -163,7 +178,7 @@ const claimCmd = program
 // Submit claim
 claimCmd
   .command('submit <text>')
-  .description('Submit a new claim')
+  .description('Submit a new claim (requires stake + claim fee)')
   .option('-s, --stake <amount>', 'Stake amount in EMET', '100')
   .option('-e, --evidence <url>', 'Evidence URL')
   .action(async (text, options) => {
@@ -177,7 +192,10 @@ claimCmd
         process.exit(1);
       }
       
-      spinner.text = 'Approving tokens...';
+      // Show fee info
+      const claimFee = await client.getClaimFee();
+      spinner.text = `Approving tokens (stake: ${options.stake} + fee: ${claimFee.formatted} EMET)...`;
+      
       const result = await client.submitClaim(text, {
         stake: options.stake,
         evidence: options.evidence || ''
@@ -185,6 +203,8 @@ claimCmd
       
       spinner.succeed('Claim submitted!');
       console.log(chalk.cyan(`\nClaim ID: ${chalk.bold(result.claimId)}`));
+      console.log(chalk.gray(`Stake: ${options.stake} EMET`));
+      console.log(chalk.gray(`Fee: ${result.fee} EMET`));
       console.log(chalk.gray(`TX: ${result.txHash}`));
       
     } catch (err) {
@@ -371,14 +391,14 @@ const challengeCmd = program
   .command('challenge')
   .description('Challenge management');
 
-// Create challenge
+// Create challenge (ChallengeV3)
 challengeCmd
   .command('create <claimId>')
-  .description('Challenge a claim')
+  .description('Initiate a challenge against a claim (ChallengeV3)')
   .requiredOption('-e, --evidence <url>', 'Evidence URL')
   .requiredOption('-s, --stake <amount>', 'Stake amount')
   .action(async (claimId, options) => {
-    const spinner = ora('Creating challenge...').start();
+    const spinner = ora('Initiating challenge...').start();
     try {
       const client = getClient(program.opts());
       
@@ -388,28 +408,61 @@ challengeCmd
         process.exit(1);
       }
       
-      spinner.text = 'Approving tokens...';
-      const result = await client.challenge(parseInt(claimId), {
+      // Show resolution fee info
+      const resFee = await client.getResolutionFee();
+      spinner.text = `Approving tokens (resolution fee: ${resFee.percentage} on resolve)...`;
+      
+      const result = await client.initiateChallenge(parseInt(claimId), {
         evidence: options.evidence,
         stake: options.stake
       });
       
-      spinner.succeed(`Challenge created for claim #${claimId}`);
+      spinner.succeed(`Challenge initiated for claim #${claimId}`);
+      console.log(chalk.gray(`Stake: ${options.stake} EMET`));
+      console.log(chalk.gray(`Resolution fee: ${resFee.percentage} (deducted from loser)`));
       console.log(chalk.gray(`TX: ${result.txHash}`));
       
     } catch (err) {
-      spinner.fail('Failed to create challenge');
+      spinner.fail('Failed to initiate challenge');
       console.error(chalk.red(`Error: ${err.message}`));
       process.exit(1);
     }
   });
 
-// Resolve challenge
+// Vote on challenge (ChallengeV3)
+challengeCmd
+  .command('vote <claimId>')
+  .description('Cast a vote on a challenge')
+  .option('--support', 'Support the challenger')
+  .option('--oppose', 'Oppose the challenger (support the claim)')
+  .action(async (claimId, options) => {
+    const spinner = ora('Casting vote...').start();
+    try {
+      const client = getClient(program.opts());
+      
+      if (!client.signer) {
+        spinner.fail('Private key required');
+        console.error(chalk.red('Set EMET_PRIVATE_KEY or use --private-key'));
+        process.exit(1);
+      }
+      
+      const supportChallenge = options.support || !options.oppose;
+      const result = await client.castVote(parseInt(claimId), supportChallenge);
+      
+      spinner.succeed(`Vote cast ${supportChallenge ? 'for' : 'against'} challenge on claim #${claimId}`);
+      console.log(chalk.gray(`TX: ${result.txHash}`));
+      
+    } catch (err) {
+      spinner.fail('Failed to cast vote');
+      console.error(chalk.red(`Error: ${err.message}`));
+      process.exit(1);
+    }
+  });
+
+// Resolve challenge (ChallengeV3)
 challengeCmd
   .command('resolve <claimId>')
-  .description('Resolve a challenge')
-  .option('--success', 'Challenge succeeded (default)', true)
-  .option('--failed', 'Challenge failed')
+  .description('Resolve a challenge (anyone can call after voting ends)')
   .action(async (claimId, options) => {
     const spinner = ora('Resolving challenge...').start();
     try {
@@ -423,14 +476,16 @@ challengeCmd
       
       const canResolve = await client.canResolveChallenge(parseInt(claimId));
       if (!canResolve) {
-        spinner.fail('Challenge cannot be resolved yet');
+        spinner.fail('Challenge cannot be resolved yet (voting period not ended)');
         process.exit(1);
       }
       
-      const succeeded = !options.failed;
-      const result = await client.resolveChallenge(parseInt(claimId), succeeded);
+      const resFee = await client.getResolutionFee();
+      spinner.text = `Resolving (${resFee.percentage} fee will be deducted from loser)...`;
       
-      spinner.succeed(`Challenge resolved (${succeeded ? 'succeeded' : 'failed'})`);
+      const result = await client.resolveChallenge(parseInt(claimId));
+      
+      spinner.succeed(`Challenge resolved for claim #${claimId}`);
       console.log(chalk.gray(`TX: ${result.txHash}`));
       
     } catch (err) {
