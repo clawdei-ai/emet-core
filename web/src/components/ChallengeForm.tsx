@@ -12,11 +12,12 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
   const { address } = useAccount();
   const [counterEvidence, setCounterEvidence] = useState('');
   const [stakeAmount, setStakeAmount] = useState('100');
+  const [tier, setTier] = useState(0); // 0=Minor, 1=Major, 2=Critical
   const [showForm, setShowForm] = useState(false);
 
   const challengeHook = useInitiateChallenge();
   const approveHook = useApproveEMET();
-  const { data: allowance } = useTokenAllowance(address, CONTRACTS.EMETChallenge);
+  const { data: allowance } = useTokenAllowance(address, CONTRACTS.EMETChallengeV3 || CONTRACTS.EMETChallenge);
 
   const stakeWei = stakeAmount ? parseUnits(stakeAmount, 18) : 0n;
   const needsApproval = allowance !== undefined && stakeWei > allowance;
@@ -25,10 +26,9 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
     if (!counterEvidence.trim()) return;
 
     if (needsApproval) {
-      approveHook.approve(CONTRACTS.EMETChallenge, stakeWei);
-      // Challenge will fire after approval via parent's useEffect
+      approveHook.approve(CONTRACTS.EMETChallengeV3 || CONTRACTS.EMETChallenge, stakeWei);
     } else {
-      challengeHook.challenge(claimId, stakeAmount);
+      challengeHook.challenge(claimId, stakeAmount, counterEvidence, tier);
     }
   };
 
@@ -65,6 +65,16 @@ export function ChallengeForm({ claimId }: ChallengeFormProps) {
           className="challenge-textarea"
         />
         <small>Provide clear reasoning and evidence. This helps other stakers evaluate the challenge.</small>
+      </div>
+
+      <div className="form-group">
+        <label>Challenge Tier</label>
+        <select value={tier} onChange={(e) => setTier(Number(e.target.value))}>
+          <option value={0}>Minor (3 jurors, 48h, &lt;1,000 EMET)</option>
+          <option value={1}>Major (7 jurors, 1 week, &lt;100,000 EMET)</option>
+          <option value={2}>Critical (21 jurors, 2 weeks, ≥100,000 EMET)</option>
+        </select>
+        <small>Higher tiers involve more jurors and longer deliberation.</small>
       </div>
 
       <div className="form-group">

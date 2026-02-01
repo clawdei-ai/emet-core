@@ -132,11 +132,41 @@ export const EMETChallengeABI = [
     stateMutability: 'view',
   },
   { type: 'function', name: 'minimumChallengeStake', inputs: [], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
-  // Write functions
+  // Write functions (V2 legacy)
   { type: 'function', name: 'initiateChallenge', inputs: [{ name: 'claimId', type: 'uint256' }, { name: 'stake', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'stakeForClaim', inputs: [{ name: 'claimId', type: 'uint256' }, { name: 'amount', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'stakeAgainstClaim', inputs: [{ name: 'claimId', type: 'uint256' }, { name: 'amount', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
   { type: 'function', name: 'resolveChallenge', inputs: [{ name: 'claimId', type: 'uint256' }], outputs: [], stateMutability: 'nonpayable' },
+] as const;
+
+export const EMETChallengeV3ABI = [
+  // View
+  {
+    type: 'function', name: 'getChallenge',
+    inputs: [{ name: 'challengeId', type: 'uint256' }],
+    outputs: [
+      { name: 'claimId', type: 'uint256' },
+      { name: 'challenger', type: 'address' },
+      { name: 'evidence', type: 'string' },
+      { name: 'stake', type: 'uint256' },
+      { name: 'tier', type: 'uint8' },
+      { name: 'resolved', type: 'bool' },
+    ],
+    stateMutability: 'view',
+  },
+  { type: 'function', name: 'challengeCount', inputs: [], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
+  // Write
+  {
+    type: 'function', name: 'initiateChallenge',
+    inputs: [
+      { name: 'claimId', type: 'uint256' },
+      { name: 'evidence', type: 'string' },
+      { name: 'stake', type: 'uint256' },
+      { name: 'tier', type: 'uint8' },
+    ],
+    outputs: [{ name: 'challengeId', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
 ] as const;
 
 export const EMETReputationABI = [

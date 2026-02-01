@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { parseUnits } from 'viem';
 import { useEffect } from 'react';
 import { CONTRACTS } from '../contracts/addresses';
-import { EMETRegistryABI, EMETStakeABI, EMETChallengeABI, EMETReputationABI, EMETTokenABI } from '../contracts/abis';
+import { EMETRegistryABI, EMETStakeABI, EMETChallengeABI, EMETChallengeV3ABI, EMETReputationABI, EMETTokenABI } from '../contracts/abis';
 
 // Refetch interval for live data (ms)
 const LIVE = 6000;
@@ -210,12 +210,12 @@ export function useInitiateChallenge() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   useInvalidateOnSuccess(hash, isSuccess);
 
-  const challenge = (claimId: bigint, stake: string) => {
+  const challenge = (claimId: bigint, stake: string, evidence: string, tier: number = 0) => {
     writeContract({
-      address: CONTRACTS.EMETChallenge as `0x${string}`,
-      abi: EMETChallengeABI,
+      address: CONTRACTS.EMETChallengeV3 as `0x${string}`,
+      abi: EMETChallengeV3ABI,
       functionName: 'initiateChallenge',
-      args: [claimId, parseUnits(stake, 18)],
+      args: [claimId, evidence, parseUnits(stake, 18), tier],
     });
   };
 

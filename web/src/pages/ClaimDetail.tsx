@@ -44,7 +44,7 @@ export function ClaimDetail() {
         if (action === 'stakeFor') {
           stakeForHook.stakeFor(claimId, stakeAmount);
         } else if (action === 'challenge') {
-          challengeHook.challenge(claimId, stakeAmount);
+          challengeHook.challenge(claimId, stakeAmount, '', 0);
         }
       });
     }
