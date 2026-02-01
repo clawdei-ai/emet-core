@@ -1,51 +1,71 @@
-# EMET Protocol Deployments
+# EMET Protocol — Deployed Contracts
 
-## Base Mainnet (Production)
+**Chain:** Base Mainnet (8453)
+**Deployer:** `0x4438D01f0770B61A0C4A65C95804850D7609De92`
+**Version:** 2.1 — 18 contracts, 401 tests
+**Last Updated:** February 1, 2026
 
-### Core Contracts (Feb 1, 2026)
+## Core
 
-| Contract | Address |
-|----------|---------|
-| EMET Token | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` |
-| EMETRegistry | `0x9D2550eB1Ee613E0f35c70524e1304B26392b0aC` |
-| EMETStake | `0x63901ED9Fbd8262B4505819E2F39a6145f28Fbf0` |
-| EMETChallenge (v1) | `0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b` |
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMET Token (ERC-20) | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` | ✅ |
+| EMETRegistry | `0x69FC0F525F15DFB57e762cD2c570114433AFc6e2` | ✅ |
+| EMETStake | `0xb4A3Cf08194E445db65862Fb92bbC0cE587345bb` | ✅ |
+| EMETSignature | `0x6E5A8eF99D294a381bf4D0b0e27B95aFc293e074` | ✅ |
 
-### Economic Layer (Feb 1, 2026)
+## Governance
 
-| Contract | Address | Deploy Tx |
-|----------|---------|-----------|
-| EMETTreasury | `0x1b9dEdB19B6c0240c791ac6d4649C94a6eB997AE` | [`0xca148...`](https://basescan.org/tx/0xca14815ff126deaa204469b8d7c98beb43244e10c77862087219a5ae54a3f162) |
-| EMETReputation | `0xAb6Aa88faaC77c1d941eE25A81e397a7A6fa3a85` | [`0xf424b...`](https://basescan.org/tx/0xf424b1a2837a5cc4d6daf12461d23f5a20bc34ed7b011f48fb9fb2b50f30b054) |
-| EMETLPRewards | `0x7191d2620a342753F905265ce5852c015fa44c90` | [`0xdba81...`](https://basescan.org/tx/0xdba816b5820ebfde5090467f61aee87aeb7c1f907c888b54a8b45cd23b94d399) |
-| EMETChallengeV2 | `0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b` | [`0x55888...`](https://basescan.org/tx/0x558882e1262d2534cf881887f9bd884094cab9fcc7b1695e08fa128249c7cb7e) |
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMETChallengeV3 | `0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332` | ✅ |
+| EMETJuryPool | `0xDBa7434180e09c9b0857d5808a227E32E1c79bD8` | ✅ |
+| EMETJurorStake | `0x3f672390BeDac73eaCa3136552dB1197654DE20F` | ✅ |
+| EMETHumanOracle | `0x017eEA4fad7dC4fb26E260B4e91354F722F6B61E` | ✅ |
 
-### Signature Layer (Feb 2, 2026)
+## Trust
 
-| Contract | Address | Deploy Tx |
-|----------|---------|-----------|
-| EMETSignature | `0x8A09C0E6EFEd9119DF04bC9e518F7b2E5A037D90` | [`0x0eabf...`](https://basescan.org/tx/0x0eabf20fdb066392bfcc468f5af84dfbfbed99ccf6a16c6cf5a9cdae3e73d037) |
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMETReputation | `0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e` | ✅ |
+| EMETSybilResistance | `0xB195c1B3161b73B1dc2958793BBEB48D7995bEa5` | ✅ |
+| EMETConcentration | `0xbC13370559317f363d9665a49C59538484dF27fC` | ✅ |
 
-### Contract Wiring
+## Verification
 
-- **Treasury → ChallengeV2:** Authorized as fee depositor ([tx](https://basescan.org/tx/0xed48869a45dcb68e26f4e099f62038b3f7ab41061c2083ffd8a30c86b474496d))
-- **Treasury → LPRewards:** Set as distribution target ([tx](https://basescan.org/tx/0x29df5730eceb8c05df1078266088ce8039e4a2b3d373462db8fc3bf4475b1d61))
-- **Reputation → ChallengeV2:** Authorized as updater ([tx](https://basescan.org/tx/0x522caa5bb3082a380ca5340f2d75a6b16363fe8a2b1ae600057d17d00749828e))
-- **ChallengeV2 → Resolver:** Set to deployer wallet ([tx](https://basescan.org/tx/0x6ed06df9f435ee34caf3fa60d06d78fa368fadd5731dae7af9e730c63fa35758))
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMETCrossModel | `0x7d19FcfFF4eD6093b9807edd7ae1b333f4b069aD` | ✅ |
+| EMETDecay | `0xf75308E8093BC63cE6AcA0a01daDD918B249ab5a` | ✅ |
 
-### Parameters
-- **Minimum Stake:** 100 EMET
-- **Challenge Period:** 7 days
-- **Protocol Fee:** 1% (100 bps)
-- **Max Reputation Multiplier:** 2x
-- **LP Staking Token:** `0x0C7f51B0dB3e319736c979EBD38687cff521086A` (Uniswap EMET/WETH pool)
+## Economic
 
-### First Claim (Claim #0)
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMETTreasury | `0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502` | ✅ |
+| EMETChallengeV2 (legacy) | `0x6F42c2F75aDB5e25018Ef7822E94DA3Df37E5B5A` | ✅ |
+| EMETWhistleblower | `0xaa57c2cB96cceD9A56D238F2d1F9814a31CA8a26` | ✅ |
 
-**Claim:** "Clawdei (an autonomous AI agent built on Claude) deployed the EMET Protocol smart contracts on Base mainnet on February 1, 2026."
+## Not Yet Deployed
 
-**Transaction:** [`0xe92a37...`](https://basescan.org/tx/0xe92a37810ee4374eb9505037c7ebceade514cc98822002be8861387dd10c7ff4)
+| Contract | Status |
+|----------|--------|
+| EMETPrecedent | Built, tested |
+| EMETLPRewards | Built, tested |
 
-**Stake:** 1,000 EMET
+## Liquidity
 
-All contracts verified on BaseScan.
+| Pool | Address |
+|------|---------|
+| Uniswap V3 (EMET/WETH) | `0x0C7f51B0dB3e319736c979EBD38687cff521086A` |
+
+## Known Issues
+
+- **EMETStake.challengeContract** points to ChallengeV2, not ChallengeV3. One-shot setter prevents update. ChallengeV3 operates independently via JurorStake.
+
+## Links
+
+- **Web App:** https://app.emet-protocol.com
+- **DexScreener:** https://dexscreener.com/base/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C
+- **Uniswap:** https://app.uniswap.org/swap?chain=base&outputCurrency=0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C
+- **Blockscout:** https://base.blockscout.com/address/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C
