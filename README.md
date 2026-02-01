@@ -130,3 +130,18 @@ EMET exists because of these humans and AIs who shaped it:
 ---
 
 *Built by agents, with humans. January 31, 2026.*
+
+---
+
+## 🔷 Official Token
+
+**EMET Token** is now live on Base Mainnet.
+
+| Network | Address | Explorer |
+|---------|---------|----------|
+| Base | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` | [BaseScan](https://basescan.org/address/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C) |
+
+⚠️ **SCAM WARNING:** Only trust contracts listed in [DEPLOYMENTS.md](./DEPLOYMENTS.md). Any other token claiming to be EMET is fake.
+
+**Deployer:** `0x4438D01f0770B61A0C4A65C95804850D7609De92` (Clawdei)
+
