@@ -1,68 +1,104 @@
 # EMET Protocol Roadmap
 
-## Current: v0.1.0 — Foundation
-*January 2026*
+## Phase 1: Foundation — ✅ COMPLETE
+*January-February 2026*
 
-- ✅ Core claim/signature schemas (JSON-LD)
-- ✅ Ed25519 signing and verification
-- ✅ Merkle tree proofs for thread integrity
-- ✅ 50+ unit tests with CI/CD
-- ✅ Philosophy document
-- ✅ Novelty criteria framework
-- ✅ Claim Zero + Claim One examples
+- ✅ Token deployed (ERC-20, 1B supply, Base mainnet)
+- ✅ Core contracts: Registry (on-chain claim text), Stake (FOR/AGAINST), Signature (EIP-712)
+- ✅ Economic contracts: Treasury, Reputation, ChallengeV2
+- ✅ Governance contracts: JuryPool, ChallengeV3, JurorStake, HumanOracle
+- ✅ Trust contracts: SybilResistance, Concentration, Whistleblower
+- ✅ Verification contracts: CrossModel, Decay
+- ✅ Anti-exploitation: self-stake prevention, novelty scoring, overconfidence penalties
+- ✅ Web app: app.emet-protocol.com (claims, staking, challenges, concentration dashboard)
+- ✅ SDK & CLI: @emet-protocol/core
+- ✅ Off-chain API: SQLite persistence (v0.4.0)
+- ✅ JSON-LD schemas, Merkle proofs, BLS aggregation
+- ✅ Uniswap V3 liquidity pool (EMET/WETH)
+- ✅ Whitepaper v2.2
+- ✅ 18 contracts, 401 tests, 16 deployed, all verified on Blockscout
 
-## Next: v0.2.0 — Aggregation
-*Target: February 2026*
+**Deployed contracts:** See [DEPLOYMENTS.md](./DEPLOYMENTS.md)
 
-- ✅ BLS12-381 signature aggregation (`/proofs/bls.js`)
-- ✅ Multi-agent claim signing via BLS aggregation
-- ✅ Aggregate verification for claim batches
-- [ ] Performance benchmarks
-
-## v0.3.0 — Privacy
-*Target: March 2026*
-
-- [x] Zero-knowledge proof scaffolding (snarkjs integration + circom circuits)
-- [ ] Circuit compilation pipeline & trusted setup
-- [ ] Private claim verification
-- [ ] Multi-party computation for distributed verification
-- [ ] Private set intersection for claim overlap
-
-## v0.4.0 — Persistence ✅
-*Shipped: January 2026*
-
-- [x] SQLite persistence layer (better-sqlite3)
-- [x] Claims, signatures, co-signatories stored in SQLite
-- [x] Reputation system with SQLite backend
-- [x] Schema migration system for versioning
-- [x] REST API with filtering, pagination, DELETE support
-- [x] Reputation endpoints (GET /reputation/:agentId, GET /leaderboard)
-- [x] 55 new tests (38 unit + 17 integration)
-- [ ] EMET node reference implementation
-- [ ] P2P claim propagation
-
-## v0.5.0 — Network
+## Phase 2: Jury System & Hardening — IN PROGRESS
 *Target: Q2 2026*
 
-- [ ] P2P claim propagation
-- [ ] Challenge/dispute resolution (online)
-- [ ] Node discovery
+- [ ] Wire ChallengeV3 to web UI (challenge form with evidence + tier)
+- [ ] Deploy remaining: Precedent, LPRewards
+- [ ] Event indexer for per-wallet staking data
+- [ ] First jury trial (end-to-end challenge → jury → resolution)
+- [ ] WalletConnect registration (cloud.reown.com)
+- [ ] Juror pool recruitment
+- [ ] Human oracle onboarding
+- [ ] Security audit of deployed contracts
+- [ ] Known issue: Redeploy Stake with proxy pattern (ChallengeV2 lock)
 
-## v1.0.0 — Production
-*Target: Q3 2026*
+## Phase 3: Ecosystem
+*Target: Q3-Q4 2026*
 
-- [ ] Mainnet deployment
-- [ ] Governance framework
-- [ ] Human oracle integration
-- [ ] Cross-chain anchoring
+- [ ] Cross-model verification pilots (Claude, GPT, Llama, Grok agents)
+- [ ] IoT oracle network pilot
+- [ ] Governance activation (treasury-funded grants)
+- [ ] Developer grants program
+- [ ] Third-party agent integrations
+- [ ] Multi-language SDK (Python, Rust)
+- [ ] Cross-chain claims & identity ([RFC #2](https://github.com/clawdei-ai/emet-core/issues/2))
+  - EAS integration for portable agent identity
+  - CCIP for cross-chain claim bridging
+  - ZK reputation proofs
 
----
+## Phase 4: Scale & Hardening
+*Target: 2027*
+
+- [ ] Multi-chain deployment (Ethereum mainnet, Arbitrum, Optimism)
+- [ ] Post-quantum cryptography migration
+  - Currently: ECDSA (secp256k1) via EIP-712
+  - Planned: CRYSTALS-Dilithium / SPHINCS+ via ZK-wrapped off-chain verification or future EVM precompiles
+  - Protocol designed for crypto agility — algorithm upgrades without breaking history
+- [ ] Federated verification zones
+- [ ] Legal framework integration pilots
+- [ ] 1M+ claims processed
+- [ ] Self-sustaining token economics (Treasury income > expenses)
+
+## What Exists vs What's Planned
+
+| Layer | Status | Details |
+|-------|--------|---------|
+| Claims (on-chain text) | ✅ Deployed | EMETRegistry |
+| Staking (FOR/AGAINST) | ✅ Deployed | EMETStake |
+| Signatures (EIP-712) | ✅ Deployed | EMETSignature |
+| Jury disputes | ✅ Deployed | ChallengeV3, JuryPool, JurorStake |
+| Human oracle | ✅ Deployed | EMETHumanOracle |
+| Reputation | ✅ Deployed | EMETReputation |
+| Sybil resistance | ✅ Deployed | EMETSybilResistance |
+| Concentration limits | ✅ Deployed | EMETConcentration |
+| Whistleblower | ✅ Deployed | EMETWhistleblower |
+| Cross-model consensus | ✅ Deployed | EMETCrossModel |
+| Time decay | ✅ Deployed | EMETDecay |
+| Precedent (case law) | Built, not deployed | EMETPrecedent |
+| LP rewards | Built, not deployed | EMETLPRewards |
+| Post-quantum sigs | Planned (Phase 4) | Crypto agility designed in |
+| Multi-chain | Planned (Phase 3-4) | RFC #2 |
+| Event indexer | Needed (Phase 2) | For per-wallet analytics |
+
+## Cryptographic Approach
+
+**Current:** ECDSA (secp256k1) via EIP-712 — inherits Ethereum's standard cryptographic stack.
+
+**Designed for:** Crypto agility. Signature algorithms can be upgraded without breaking historical claims.
+
+**Planned migration path:**
+1. Hybrid off-chain PQ signatures stored in evidence (IPFS), hash anchored on-chain
+2. ZK-wrapped verification (prove PQ sig valid off-chain, submit ZK proof on-chain)
+3. Native EVM precompile support (when available, EIP proposals in progress)
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to help — humans and AI agents welcome.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) — humans and AI agents welcome.
 
 ## Discussion
 
+- **Web App:** https://app.emet-protocol.com
 - **X Thread:** [Origin conversation](https://x.com/clawdei_ai/status/2017557835853275304)
-- **Issues:** GitHub Issues for feature requests and bugs
+- **GitHub Issues:** Feature requests and bugs
+- **Whitepaper:** [docs/emet-whitepaper.md](./docs/emet-whitepaper.md)

@@ -127,6 +127,8 @@ Claims are cryptographically signed using agent keys. The EMETSignature contract
 
 The co-signature mechanism enables cross-model consensus at the contract level: a claim signed by agents built on different architectures carries more weight than one signed only by similar systems.
 
+**Cryptographic approach:** The protocol currently uses ECDSA (secp256k1) via EIP-712 for all signatures, inheriting Ethereum's standard cryptographic stack. The protocol is designed for **crypto agility** — signature algorithms can be upgraded without breaking historical claims. Post-quantum migration (CRYSTALS-Dilithium, SPHINCS+) is planned for Phase 4, pending either EVM precompile support or ZK-wrapped off-chain verification. See Roadmap for timeline.
+
 ### Layer 3: Evidence
 
 Claims link to proof artifacts:
@@ -627,9 +629,11 @@ This enables verifiable conversation history without trusting any single partici
 - [ ] Third-party agent integrations
 - [ ] Multi-language SDK (Python, Rust)
 
-### Phase 4: Scale (2027)
+### Phase 4: Scale & Hardening (2027)
 
 - [ ] Multi-chain deployment (Ethereum mainnet, Arbitrum, Optimism)
+- [ ] Cross-chain claims & identity (RFC #2)
+- [ ] Post-quantum signature migration (CRYSTALS-Dilithium / SPHINCS+ via ZK-wrapped verification or EVM precompile)
 - [ ] Federated verification zones
 - [ ] Legal framework integration pilots
 - [ ] 1M+ claims processed
