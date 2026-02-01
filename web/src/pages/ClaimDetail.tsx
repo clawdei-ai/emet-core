@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, keccak256, toBytes } from 'viem';
 import {
   useClaim, useStakeTotals, useUserStakes, useChallenge, useCanResolve,
   useStakeFor, useInitiateChallenge, useResolveChallenge, useVerifyUnchallenged,
@@ -10,6 +10,8 @@ import {
 import { CONTRACTS } from '../contracts/addresses';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatEMET, shortenAddress, timeAgo, timeRemaining } from '../lib/format';
+import { getClaimText, saveClaim } from '../lib/claimStorage';
+import { getClaimTextFromIndex } from '../lib/claimsIndex';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,9 @@ export function ClaimDetail() {
 
   const [stakeAmount, setStakeAmount] = useState('100');
   const [action, setAction] = useState<'none' | 'stakeFor' | 'challenge'>('none');
+  const [manualClaimText, setManualClaimText] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'valid' | 'invalid'>('none');
+  const [indexedClaimText, setIndexedClaimText] = useState<string | null>(null);
 
   // Write hooks
   const stakeForHook = useStakeFor();
@@ -40,6 +45,19 @@ export function ClaimDetail() {
     if (approveHook.isSuccess) refetchAllowance();
   }, [approveHook.isSuccess, refetchAllowance]);
 
+  // Fetch claim text from public index if not stored locally
+  useEffect(() => {
+    if (claim && !getClaimText((claim as { claimHash: string }).claimHash)) {
+      getClaimTextFromIndex((claim as { claimHash: string }).claimHash).then((text) => {
+        if (text) {
+          setIndexedClaimText(text);
+          // Cache locally for future visits
+          saveClaim((claim as { claimHash: string }).claimHash, text);
+        }
+      });
+    }
+  }, [claim]);
+
   if (isLoading) return <div className="page"><p className="loading">Loading claim...</p></div>;
   if (!claim) return <div className="page"><p className="empty">Claim not found.</p></div>;
 
@@ -51,6 +69,22 @@ export function ClaimDetail() {
     stake: bigint;
     challengeEnd: bigint;
     status: number;
+  };
+
+  // Try to get claim text from local storage or index
+  const storedClaimText = getClaimText(c.claimHash);
+  const claimText = storedClaimText || indexedClaimText || (verificationStatus === 'valid' ? manualClaimText : null);
+
+  const verifyClaimText = () => {
+    if (!manualClaimText.trim()) return;
+    const computedHash = keccak256(toBytes(manualClaimText));
+    if (computedHash === c.claimHash) {
+      setVerificationStatus('valid');
+      // Save for future visits
+      saveClaim(c.claimHash, manualClaimText);
+    } else {
+      setVerificationStatus('invalid');
+    }
   };
 
   const totalFor = stakeTotals ? (stakeTotals as [bigint, bigint])[0] : 0n;
@@ -89,6 +123,37 @@ export function ClaimDetail() {
       <div className="detail-grid">
         <div className="card">
           <h3>Claim Info</h3>
+          
+          {/* Show claim text prominently if available */}
+          {claimText ? (
+            <div className="claim-text-box">
+              <span className="detail-label">Claim Statement {verificationStatus === 'valid' && '✓ Verified'}</span>
+              <p className="claim-text">{claimText}</p>
+            </div>
+          ) : (
+            <div className="claim-text-box claim-text-missing">
+              <span className="detail-label">Claim Statement</span>
+              <p className="claim-text-note">
+                Claim text not stored locally. <strong>Check the evidence link below</strong> — it may contain the original text.
+                Or paste it here to verify:
+              </p>
+              <div className="verify-form">
+                <textarea
+                  value={manualClaimText}
+                  onChange={(e) => { setManualClaimText(e.target.value); setVerificationStatus('none'); }}
+                  placeholder="Paste the original claim text to verify it matches the hash..."
+                  rows={3}
+                />
+                <button className="btn btn-secondary" onClick={verifyClaimText}>
+                  Verify Text Matches Hash
+                </button>
+                {verificationStatus === 'invalid' && (
+                  <p className="verify-error">✗ Text doesn't match the on-chain hash. Check for typos or extra whitespace.</p>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="detail-row">
             <span className="detail-label">Submitter</span>
             <a href={`https://basescan.org/address/${c.submitter}`} target="_blank" rel="noreferrer">
@@ -96,8 +161,8 @@ export function ClaimDetail() {
             </a>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Hash</span>
-            <code className="hash">{c.claimHash}</code>
+            <span className="detail-label">Fingerprint (Hash)</span>
+            <code className="hash" title="keccak256 hash of the claim text">{c.claimHash.slice(0, 18)}...</code>
           </div>
           <div className="detail-row">
             <span className="detail-label">Evidence</span>
@@ -160,9 +225,23 @@ export function ClaimDetail() {
       {/* Actions */}
       {address && (c.status === 0 || c.status === 1) && (
         <div className="card action-card">
-          <h3>Actions</h3>
+          <h3>Take Action</h3>
+          
+          {c.status === 0 && (
+            <div className="action-explainer">
+              <p><strong>🟢 Stake For:</strong> You believe this claim is TRUE. Stake EMET to support it and earn rewards if verified.</p>
+              <p><strong>🔴 Challenge:</strong> You believe this claim is FALSE. Stake EMET to dispute it. If you're right, you win the submitter's stake.</p>
+            </div>
+          )}
+          
+          {c.status === 1 && (
+            <div className="action-explainer">
+              <p>⚠️ This claim is being challenged. You can still stake FOR it if you believe it's true.</p>
+            </div>
+          )}
+
           <div className="form-group">
-            <label>Amount (EMET)</label>
+            <label>Stake Amount (EMET)</label>
             <input
               type="number"
               value={stakeAmount}
@@ -175,16 +254,16 @@ export function ClaimDetail() {
             {c.status === 0 && (
               <>
                 <button className="btn btn-primary" onClick={handleStakeFor} disabled={stakeForHook.isPending}>
-                  Stake For
+                  🟢 Stake FOR (It's True)
                 </button>
                 <button className="btn btn-danger" onClick={handleChallenge} disabled={challengeHook.isPending}>
-                  Challenge
+                  🔴 Challenge (It's False)
                 </button>
               </>
             )}
             {c.status === 1 && (
               <button className="btn btn-primary" onClick={handleStakeFor} disabled={stakeForHook.isPending}>
-                Stake For
+                🟢 Stake FOR (It's True)
               </button>
             )}
           </div>

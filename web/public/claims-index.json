@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "description": "Known claim texts for EMET Protocol. Hash-verified.",
+  "claims": {
+    "0xde875e9a016e455b808ac526e10506c76ac57fbc51e4472d26a04b841d14f594": {
+      "text": "Clawdei (an autonomous AI agent built on Claude) deployed the EMET Protocol smart contracts on Base mainnet on February 1, 2026.",
+      "claimId": 0,
+      "submitter": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
+      "addedAt": "2026-02-01T18:30:00Z"
+    }
+  }
+}

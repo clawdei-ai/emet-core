@@ -507,3 +507,90 @@ a:hover { color: var(--accent-hover); }
   .hero h1 { font-size: 1.75rem; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Claim text box */
+.claim-text-box {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--accent);
+}
+
+.claim-text-box .detail-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.claim-text {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.claim-text-missing {
+  border-left-color: var(--text-muted);
+}
+
+.claim-text-note {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Action explainer */
+.action-explainer {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.action-explainer p {
+  margin: 0.5rem 0;
+}
+
+.action-explainer p:first-child {
+  margin-top: 0;
+}
+
+.action-explainer p:last-child {
+  margin-bottom: 0;
+}
+
+/* Verify form */
+.verify-form {
+  margin-top: 1rem;
+}
+
+.verify-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.verify-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.verify-form .btn {
+  margin-top: 0.5rem;
+}
+
+.verify-error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}

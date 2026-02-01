@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, keccak256, toBytes } from 'viem';
 import { useSubmitClaim, useApproveEMET, useMinimumStake, useTokenBalance, useTokenAllowance } from '../hooks/useProtocol';
 import { CONTRACTS } from '../contracts/addresses';
 import { formatEMET } from '../lib/format';
+import { saveClaim } from '../lib/claimStorage';
 
 export function SubmitClaim() {
   const { address, isConnected } = useAccount();
@@ -37,6 +38,10 @@ export function SubmitClaim() {
     e.preventDefault();
     if (!claimText || !evidenceURL || !stakeAmount) return;
 
+    // Save claim text locally (hash is what goes on-chain)
+    const claimHash = keccak256(toBytes(claimText));
+    saveClaim(claimHash, claimText);
+
     if (needsApproval) {
       setStep('approve');
       approve(CONTRACTS.EMETRegistry, stakeWei);
@@ -47,6 +52,9 @@ export function SubmitClaim() {
   };
 
   const handleProceedSubmit = () => {
+    // Save claim text locally before submitting
+    const claimHash = keccak256(toBytes(claimText));
+    saveClaim(claimHash, claimText);
     submit(claimText, evidenceURL, stakeAmount);
   };
 
@@ -105,7 +113,11 @@ export function SubmitClaim() {
             placeholder="https://... or ipfs://..."
             required
           />
-          <small>Link to supporting evidence (IPFS, Arweave, or web URL).</small>
+          <small>
+            Link to evidence. <strong>Tip:</strong> Include the full claim text in your evidence document 
+            so others can verify the hash. Create a <a href="https://gist.github.com" target="_blank" rel="noreferrer">GitHub Gist</a> or 
+            upload JSON to IPFS with format: {`{"claim": "your text", "evidence": "..."}`}
+          </small>
         </div>
 
         <div className="form-group">
