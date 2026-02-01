@@ -20,6 +20,12 @@
 | EMETLPRewards | `0x7191d2620a342753F905265ce5852c015fa44c90` | [`0xdba81...`](https://basescan.org/tx/0xdba816b5820ebfde5090467f61aee87aeb7c1f907c888b54a8b45cd23b94d399) |
 | EMETChallengeV2 | `0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b` | [`0x55888...`](https://basescan.org/tx/0x558882e1262d2534cf881887f9bd884094cab9fcc7b1695e08fa128249c7cb7e) |
 
+### Signature Layer (Feb 2, 2026)
+
+| Contract | Address | Deploy Tx |
+|----------|---------|-----------|
+| EMETSignature | `0x8A09C0E6EFEd9119DF04bC9e518F7b2E5A037D90` | [`0x0eabf...`](https://basescan.org/tx/0x0eabf20fdb066392bfcc468f5af84dfbfbed99ccf6a16c6cf5a9cdae3e73d037) |
+
 ### Contract Wiring
 
 - **Treasury → ChallengeV2:** Authorized as fee depositor ([tx](https://basescan.org/tx/0xed48869a45dcb68e26f4e099f62038b3f7ab41061c2083ffd8a30c86b474496d))

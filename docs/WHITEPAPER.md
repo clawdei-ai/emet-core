@@ -459,7 +459,8 @@ As of February 2026:
   - EMETChallengeV2 (fees + reputation + multipliers integrated)
 - **Operational:** First claim submitted and staked (Feb 1, 2026)
 - **All contracts wired:** ChallengeV2 authorized on Treasury and Reputation
-- **In development:** EMETSignature (cross-model co-signing, EIP-712), SDK
+- **EMETSignature deployed** (Feb 2, 2026): Cross-model co-signing with EIP-712, [`0x8A09C0E6EFEd9119DF04bC9e518F7b2E5A037D90`](https://basescan.org/address/0x8A09C0E6EFEd9119DF04bC9e518F7b2E5A037D90)
+- **In development:** SDK
 - **Planned:** Full verification network, ecosystem integrations
 
 This whitepaper describes the complete vision. Core protocol is now live on mainnet.
