@@ -17,26 +17,27 @@ import {EMETJuryPool} from "./EMETJuryPool.sol";
 ///   3. Jurors vote during voting period (24h/72h/7d)
 ///   4. After period ends, anyone calls resolveChallenge(challengeId)
 ///   5. Majority vote determines outcome
-///   6. Stakes distributed: 85% to winner, 10% to winning jurors, 5% to treasury
+///   6. Stakes distributed: winner gets (100% - resolutionFeeBps) of loser's stake
 ///
-/// @dev No admin functions. Immutable after deployment.
+/// @dev Owner can configure resolution fee. Future governance can take over.
 contract EMETChallengeV3 {
     // ============ Constants ============
 
     /// @notice EMET token on Base mainnet
     IEMET public constant EMET = IEMET(0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C);
 
-    /// @notice Winner share of loser's stake (basis points)
-    uint256 public constant WINNER_SHARE_BPS = 8500; // 85%
+    /// @notice Default resolution fee (5% = 500 bps)
+    uint256 public constant DEFAULT_RESOLUTION_FEE_BPS = 500;
 
-    /// @notice Juror reward share (basis points)
-    uint256 public constant JUROR_SHARE_BPS = 1000; // 10%
-
-    /// @notice Protocol fee share (basis points)
-    uint256 public constant PROTOCOL_FEE_BPS = 500; // 5%
+    /// @notice Juror reward share of remaining after fee (basis points)
+    /// @dev After resolutionFeeBps is taken, this portion goes to jurors
+    uint256 public constant JUROR_SHARE_OF_REMAINDER_BPS = 1053; // ~10% of 95%
 
     /// @notice Basis-point denominator
     uint256 public constant BPS_DENOMINATOR = 10_000;
+
+    /// @notice Maximum allowed resolution fee (20%)
+    uint256 public constant MAX_RESOLUTION_FEE_BPS = 2000;
 
     // ============ Tier Configuration ============
 
@@ -123,6 +124,13 @@ contract EMETChallengeV3 {
     EMETReputation public immutable reputationContract;
     EMETJuryPool public immutable juryPool;
 
+    /// @notice Contract owner for fee configuration
+    address public owner;
+
+    /// @notice Resolution fee in basis points (default 500 = 5%)
+    /// @dev Deducted from losing party's stake, sent to Treasury
+    uint256 public resolutionFeeBps;
+
     // ============ State ============
 
     /// @notice All challenges by ID
@@ -187,6 +195,10 @@ contract EMETChallengeV3 {
         string action
     );
 
+    event ResolutionFeeUpdated(uint256 indexed oldFeeBps, uint256 indexed newFeeBps);
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
     // ============ Errors ============
 
     error ClaimDoesNotExist(uint256 claimId);
@@ -207,6 +219,8 @@ contract EMETChallengeV3 {
     error InvalidVote();
     error TransferFailed();
     error ZeroAddress();
+    error OnlyOwner();
+    error InvalidResolutionFee(uint256 provided, uint256 max);
 
     // ============ Constructor ============
 
@@ -226,6 +240,16 @@ contract EMETChallengeV3 {
         treasury = EMETTreasury(_treasury);
         reputationContract = EMETReputation(_reputation);
         juryPool = EMETJuryPool(_juryPool);
+        
+        owner = msg.sender;
+        resolutionFeeBps = DEFAULT_RESOLUTION_FEE_BPS;
+    }
+
+    // ============ Modifiers ============
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert OnlyOwner();
+        _;
     }
 
     // ============ Challenge Creation ============
@@ -423,7 +447,7 @@ contract EMETChallengeV3 {
     }
 
     /// @dev Handle resolution when all abstained
-    /// No verdict: both parties get stakes back, but challenger pays 5% fee
+    /// No verdict: both parties get stakes back, but challenger pays resolution fee
     function _handleAbstainResolution(
         Challenge storage challenge,
         EMETRegistry.Claim memory claim,
@@ -438,7 +462,7 @@ contract EMETChallengeV3 {
         registry.resolveClaim(challenge.claimId, true, address(this));
 
         // Fee only from challenger's stake (submitter already got full stake back)
-        payout.protocolFee = (challenge.stake * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+        payout.protocolFee = (challenge.stake * resolutionFeeBps) / BPS_DENOMINATOR;
         uint256 challengerReturn = challenge.stake - payout.protocolFee;
 
         // Return challenger stake minus fee
@@ -449,6 +473,8 @@ contract EMETChallengeV3 {
     }
 
     /// @dev Handle resolution with a verdict
+    /// @notice Winner gets (100% - resolutionFeeBps) of loser's stake
+    ///         Resolution fee goes to Treasury from losing party's stake
     function _handleVerdictResolution(
         uint256 challengeId,
         Challenge storage challenge,
@@ -461,27 +487,33 @@ contract EMETChallengeV3 {
         if (claimUpheld) {
             payout.winner = claim.submitter;
             // Claim upheld: registry sends stake back to submitter
-            // We distribute challenger's stake to winner (submitter) and jurors
+            // We distribute challenger's stake (loser) to winner and jurors
             registry.resolveClaim(challenge.claimId, true, address(this));
 
-            // We only have challenger's stake to distribute
-            uint256 pool = challenge.stake;
-            payout.protocolFee = (pool * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
-            payout.afterFee = pool - payout.protocolFee;
+            // Loser's stake = challenger's stake
+            uint256 loserStake = challenge.stake;
+            payout.protocolFee = (loserStake * resolutionFeeBps) / BPS_DENOMINATOR;
+            payout.afterFee = loserStake - payout.protocolFee;
 
         } else {
             payout.winner = challenge.challenger;
-            // Challenge upheld: registry sends claim stake to us
+            // Challenge upheld: registry sends claim stake (loser) to us
             registry.resolveClaim(challenge.claimId, false, address(this));
 
-            // We have both stakes to distribute
-            uint256 pool = challenge.stake + claim.stake;
-            payout.protocolFee = (pool * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
-            payout.afterFee = pool - payout.protocolFee;
+            // Winner gets their stake back + loser's stake minus fee
+            // Loser's stake = claim stake
+            uint256 loserStake = claim.stake;
+            payout.protocolFee = (loserStake * resolutionFeeBps) / BPS_DENOMINATOR;
+            // afterFee = challenger's own stake back + (loser's stake - fee)
+            payout.afterFee = challenge.stake + loserStake - payout.protocolFee;
         }
 
         // Calculate distributions from afterFee
-        uint256 jurorPoolAmount = (payout.afterFee * JUROR_SHARE_BPS) / (WINNER_SHARE_BPS + JUROR_SHARE_BPS);
+        // Juror share is calculated from the loser's stake portion after fee
+        uint256 loserStakeAfterFee = claimUpheld ? 
+            (challenge.stake - payout.protocolFee) : 
+            (claim.stake - payout.protocolFee);
+        uint256 jurorPoolAmount = (loserStakeAfterFee * JUROR_SHARE_OF_REMAINDER_BPS) / BPS_DENOMINATOR;
         payout.winnerPayout = payout.afterFee - jurorPoolAmount;
 
         // Distribute to winning jurors
@@ -597,6 +629,29 @@ contract EMETChallengeV3 {
         emit JurySelected(newChallengeId, selectedJury);
 
         return newChallengeId;
+    }
+
+    // ============ Owner Functions ============
+
+    /// @notice Set the resolution fee in basis points
+    /// @dev Only callable by owner. Fee is deducted from losing party's stake.
+    /// @param _resolutionFeeBps New fee in basis points (max 2000 = 20%)
+    function setResolutionFee(uint256 _resolutionFeeBps) external onlyOwner {
+        if (_resolutionFeeBps > MAX_RESOLUTION_FEE_BPS) {
+            revert InvalidResolutionFee(_resolutionFeeBps, MAX_RESOLUTION_FEE_BPS);
+        }
+        uint256 oldFee = resolutionFeeBps;
+        resolutionFeeBps = _resolutionFeeBps;
+        emit ResolutionFeeUpdated(oldFee, _resolutionFeeBps);
+    }
+
+    /// @notice Transfer ownership to a new address
+    /// @param newOwner The new owner address
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddress();
+        address oldOwner = owner;
+        owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 
     // ============ Internal Helpers ============
