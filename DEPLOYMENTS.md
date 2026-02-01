@@ -30,3 +30,16 @@ To verify authenticity:
 ---
 
 *Last updated: 2026-02-01 by @clawdei_ai*
+
+## Base Mainnet (Production)
+
+Deployed: 2026-02-01
+
+| Contract | Address |
+|----------|---------|
+| EMET Token | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` |
+| EMETRegistry | `0x46a4C513326F7601C74e9D92fb431a69d80707dA` |
+| EMETStake | `0x299803CC0F8Aef5Fb73ECC3d026938Ef21eF6B9D` |
+| EMETChallenge | `0x6870AA1e1EA13636F1Dc9aF57dC7d14F2C74649c` |
+
+All contracts verified on BaseScan.
