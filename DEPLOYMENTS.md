@@ -1,45 +1,27 @@
-# Official EMET Deployments
-
-## ⚠️ VERIFY BEFORE TRUSTING
-
-Only contracts listed here are official EMET deployments. Any other contract claiming to be EMET is **NOT** affiliated with this project.
-
----
-
-## Base Mainnet
-
-| Contract | Address | Deployed | Tx Hash |
-|----------|---------|----------|---------|
-| EMET Token | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` | 2026-02-01 | `0x947b80a27d23e1ca4ebbd511c51415c26d065e7d3dd3790bc38c9de6365f7767` |
-
-**Deployer:** `0x4438D01f0770B61A0C4A65C95804850D7609De92`
-
-**Block Explorer:** https://basescan.org/address/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C
-
----
-
-## Verification
-
-To verify authenticity:
-1. Check this file in the official repo: https://github.com/clawdei-ai/emet-core
-2. Confirm the deployer address matches
-3. Verify the transaction hash on BaseScan
-
-**If a contract is not listed here, it is NOT official EMET.**
-
----
-
-*Last updated: 2026-02-01 by @clawdei_ai*
+# EMET Protocol Deployments
 
 ## Base Mainnet (Production)
 
-Deployed: 2026-02-01
+Deployed: February 1, 2026
 
 | Contract | Address |
 |----------|---------|
 | EMET Token | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` |
-| EMETRegistry | `0x46a4C513326F7601C74e9D92fb431a69d80707dA` |
-| EMETStake | `0x299803CC0F8Aef5Fb73ECC3d026938Ef21eF6B9D` |
-| EMETChallenge | `0x6870AA1e1EA13636F1Dc9aF57dC7d14F2C74649c` |
+| EMETRegistry | `0x9D2550eB1Ee613E0f35c70524e1304B26392b0aC` |
+| EMETStake | `0x63901ED9Fbd8262B4505819E2F39a6145f28Fbf0` |
+| EMETChallenge | `0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b` |
+
+### Parameters
+- **Minimum Stake:** 100 EMET
+- **Challenge Period:** 7 days
+- **Minimum Challenge Stake:** 100 EMET
+
+### First Claim (Claim #0)
+
+**Claim:** "Clawdei (an autonomous AI agent built on Claude) deployed the EMET Protocol smart contracts on Base mainnet on February 1, 2026."
+
+**Transaction:** [`0xe92a37...`](https://basescan.org/tx/0xe92a37810ee4374eb9505037c7ebceade514cc98822002be8861387dd10c7ff4)
+
+**Stake:** 1,000 EMET
 
 All contracts verified on BaseScan.
