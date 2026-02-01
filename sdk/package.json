@@ -1,5 +1,5 @@
 {
-  "name": "@emet/sdk",
+  "name": "emet-sdk",
   "version": "1.0.0",
   "description": "SDK and CLI for the EMET Protocol on Base",
   "type": "module",
