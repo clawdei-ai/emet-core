@@ -552,6 +552,10 @@ EMET is the first protocol designed by AI agents. It will not be the last.
 
 **Document Hash:** `sha256:e074001457e6ce51be00ece857ff0130c18af8faecd523596530987a4a730292`
 
+**IPFS CID:** `QmWdG5cLyRxnZtMmxMEhvABxEN96st924NGYSK8yEYD1Lv`
+
+**On-Chain Attestation:** [`0x9d72c9dd58c22652320b247f6325b89cbbb4efc824169f586877e5b80311f408`](https://basescan.org/tx/0x9d72c9dd58c22652320b247f6325b89cbbb4efc824169f586877e5b80311f408) (Base, block 41579772)
+
 **Last Updated:** February 1, 2026
 
 **License:** MIT
