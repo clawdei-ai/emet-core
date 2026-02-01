@@ -6,12 +6,25 @@
     "EMETToken": "0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C",
     "EMETRegistry": "0x9D2550eB1Ee613E0f35c70524e1304B26392b0aC",
     "EMETStake": "0x63901ED9Fbd8262B4505819E2F39a6145f28Fbf0",
-    "EMETChallenge": "0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b"
+    "EMETChallenge": "0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b",
+    "EMETTreasury": "0x1b9dEdB19B6c0240c791ac6d4649C94a6eB997AE",
+    "EMETReputation": "0xAb6Aa88faaC77c1d941eE25A81e397a7A6fa3a85",
+    "EMETLPRewards": "0x7191d2620a342753F905265ce5852c015fa44c90",
+    "EMETChallengeV2": "0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b"
   },
   "parameters": {
     "minimumStake": "100 EMET",
     "challengePeriod": "7 days",
-    "minimumChallengeStake": "100 EMET"
+    "minimumChallengeStake": "100 EMET",
+    "protocolFeeBps": 100,
+    "maxReputationMultiplier": "2x",
+    "lpStakingToken": "0x0C7f51B0dB3e319736c979EBD38687cff521086A"
+  },
+  "wiring": {
+    "treasury_authorizedDepositors": ["0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b"],
+    "treasury_lpRewardsContract": "0x7191d2620a342753F905265ce5852c015fa44c90",
+    "reputation_authorizedUpdaters": ["0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b"],
+    "challengeV2_resolver": "0x4438D01f0770B61A0C4A65C95804850D7609De92"
   },
   "firstClaim": {
     "id": 0,

@@ -452,10 +452,14 @@ As of February 2026:
   - EMET Token (ERC-20)
   - EMETRegistry (claim submission)
   - EMETStake (staking system)
-  - EMETChallenge (dispute resolution)
-  - EMETSignature (cross-model co-signing)
+  - EMETChallenge (dispute resolution, v1)
+  - EMETTreasury (1% protocol fee collection, governance-ready)
+  - EMETReputation (track record, win/loss, multipliers up to 2x)
+  - EMETLPRewards (stake LP tokens, earn protocol fees)
+  - EMETChallengeV2 (fees + reputation + multipliers integrated)
 - **Operational:** First claim submitted and staked (Feb 1, 2026)
-- **In development:** EMETTreasury, EMETReputation, EMETLPRewards, SDK
+- **All contracts wired:** ChallengeV2 authorized on Treasury and Reputation
+- **In development:** EMETSignature (cross-model co-signing, EIP-712), SDK
 - **Planned:** Full verification network, ecosystem integrations
 
 This whitepaper describes the complete vision. Core protocol is now live on mainnet.
@@ -500,12 +504,23 @@ The first claim is signed. The protocol is designed. Now we build.
 
 ## Appendix A: Contract Addresses
 
+### Core Contracts
+
 | Contract | Address | Network |
 |----------|---------|---------|
 | EMET Token | `0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C` | Base |
 | EMETRegistry | `0x9D2550eB1Ee613E0f35c70524e1304B26392b0aC` | Base |
 | EMETStake | `0x63901ED9Fbd8262B4505819E2F39a6145f28Fbf0` | Base |
-| EMETChallenge | `0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b` | Base |
+| EMETChallenge (v1) | `0x5D47f36b0C768395CE49F2D7249DDe44086Fe37b` | Base |
+
+### Economic Layer Contracts
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| EMETTreasury | `0x1b9dEdB19B6c0240c791ac6d4649C94a6eB997AE` | Base |
+| EMETReputation | `0xAb6Aa88faaC77c1d941eE25A81e397a7A6fa3a85` | Base |
+| EMETLPRewards | `0x7191d2620a342753F905265ce5852c015fa44c90` | Base |
+| EMETChallengeV2 | `0x795B50ac9ff4C92Ef1E66178a7E9546c74863F1b` | Base |
 
 ## Appendix B: Resources
 
