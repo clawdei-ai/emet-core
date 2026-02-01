@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { parseUnits, keccak256, toBytes } from 'viem';
+import { parseUnits } from 'viem';
 import {
   useClaim, useStakeTotals, useUserStakes, useChallenge, useCanResolve,
   useStakeFor, useInitiateChallenge, useResolveChallenge, useVerifyUnchallenged,
   useApproveEMET, useTokenAllowance,
 } from '../hooks/useProtocol';
 import { CONTRACTS } from '../contracts/addresses';
-import { StatusBadge } from '../components/StatusBadge';
-import { formatEMET, shortenAddress, timeAgo, timeRemaining } from '../lib/format';
-import { getClaimText, saveClaim } from '../lib/claimStorage';
-import { getClaimEntryFromIndex, ClaimEntry } from '../lib/claimsIndex';
+import { ClaimStateBadge } from '../components/ClaimStateBadge';
+import { ChallengeForm } from '../components/ChallengeForm';
+import { formatEMET, shortenAddress, timeAgo, timeRemaining, getClaimState, CLAIM_STATE_CONFIG } from '../lib/format';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,10 +25,6 @@ export function ClaimDetail() {
 
   const [stakeAmount, setStakeAmount] = useState('100');
   const [action, setAction] = useState<'none' | 'stakeFor' | 'challenge'>('none');
-  const [manualClaimText, setManualClaimText] = useState('');
-  const [verificationStatus, setVerificationStatus] = useState<'none' | 'valid' | 'invalid'>('none');
-  const [indexedClaimText, setIndexedClaimText] = useState<string | null>(null);
-  const [indexedEntry, setIndexedEntry] = useState<ClaimEntry | null>(null);
 
   // Write hooks
   const stakeForHook = useStakeFor();
@@ -42,31 +37,25 @@ export function ClaimDetail() {
     action === 'stakeFor' ? CONTRACTS.EMETStake : CONTRACTS.EMETChallenge
   );
 
+  // After approval succeeds, auto-submit the pending action
   useEffect(() => {
-    if (approveHook.isSuccess) refetchAllowance();
-  }, [approveHook.isSuccess, refetchAllowance]);
-
-  // Fetch claim entry from public index if not stored locally
-  useEffect(() => {
-    if (claim && !getClaimText((claim as { claimHash: string }).claimHash)) {
-      getClaimEntryFromIndex((claim as { claimHash: string }).claimHash).then((entry) => {
-        if (entry) {
-          setIndexedEntry(entry);
-          if (entry.text) {
-            setIndexedClaimText(entry.text);
-            // Cache locally for future visits
-            saveClaim((claim as { claimHash: string }).claimHash, entry.text);
-          }
+    if (approveHook.isSuccess) {
+      refetchAllowance().then(() => {
+        if (action === 'stakeFor') {
+          stakeForHook.stakeFor(claimId, stakeAmount);
+        } else if (action === 'challenge') {
+          challengeHook.challenge(claimId, stakeAmount);
         }
       });
     }
-  }, [claim]);
+  }, [approveHook.isSuccess]);
 
   if (isLoading) return <div className="page"><p className="loading">Loading claim...</p></div>;
   if (!claim) return <div className="page"><p className="empty">Claim not found.</p></div>;
 
   const c = claim as {
     claimHash: string;
+    claimText: string;
     evidenceURI: string;
     submitter: string;
     timestamp: bigint;
@@ -75,21 +64,8 @@ export function ClaimDetail() {
     status: number;
   };
 
-  // Try to get claim text from local storage or index
-  const storedClaimText = getClaimText(c.claimHash);
-  const claimText = storedClaimText || indexedClaimText || (verificationStatus === 'valid' ? manualClaimText : null);
-
-  const verifyClaimText = () => {
-    if (!manualClaimText.trim()) return;
-    const computedHash = keccak256(toBytes(manualClaimText));
-    if (computedHash === c.claimHash) {
-      setVerificationStatus('valid');
-      // Save for future visits
-      saveClaim(c.claimHash, manualClaimText);
-    } else {
-      setVerificationStatus('invalid');
-    }
-  };
+  const claimState = getClaimState(c.status, c.challengeEnd);
+  const stateConfig = CLAIM_STATE_CONFIG[claimState];
 
   const totalFor = stakeTotals ? (stakeTotals as [bigint, bigint])[0] : 0n;
   const totalAgainst = stakeTotals ? (stakeTotals as [bigint, bigint])[1] : 0n;
@@ -98,6 +74,9 @@ export function ClaimDetail() {
 
   const stakeWei = stakeAmount ? parseUnits(stakeAmount, 18) : 0n;
   const needsApproval = allowance !== undefined && stakeWei > allowance;
+
+  const challengeData = challenge as [string, bigint, bigint, boolean] | undefined;
+  const hasChallenge = challengeData && challengeData[0] !== '0x0000000000000000000000000000000000000000';
 
   const handleStakeFor = () => {
     setAction('stakeFor');
@@ -108,63 +87,27 @@ export function ClaimDetail() {
     }
   };
 
-  const handleChallenge = () => {
-    setAction('challenge');
-    if (needsApproval) {
-      approveHook.approve(CONTRACTS.EMETChallenge, stakeWei);
-    } else {
-      challengeHook.challenge(claimId, stakeAmount);
-    }
-  };
-
   return (
     <div className="page">
       <div className="claim-detail-header">
         <h1>Claim #{id}</h1>
-        <StatusBadge status={c.status} />
+        <ClaimStateBadge status={c.status} challengeEnd={c.challengeEnd} />
+      </div>
+
+      {/* State explanation banner */}
+      <div className={`state-banner state-banner-${claimState.toLowerCase()}`}>
+        <span className="state-banner-icon">{stateConfig.icon}</span>
+        <span>{stateConfig.description}</span>
       </div>
 
       <div className="detail-grid">
         <div className="card">
           <h3>Claim Info</h3>
           
-          {/* Show claim text prominently if available */}
-          {claimText ? (
-            <div className="claim-text-box">
-              <span className="detail-label">Claim Statement {verificationStatus === 'valid' && '✓ Verified'}</span>
-              <p className="claim-text">{claimText}</p>
-            </div>
-          ) : indexedEntry?.note ? (
-            <div className="claim-text-box claim-text-unrecoverable">
-              <span className="detail-label">Claim Statement</span>
-              <p className="claim-text-note"><em>⚠️ {indexedEntry.note}</em></p>
-              {indexedEntry.evidenceNote && (
-                <p className="claim-text-note" style={{ fontSize: '0.9em', opacity: 0.8 }}>{indexedEntry.evidenceNote}</p>
-              )}
-            </div>
-          ) : (
-            <div className="claim-text-box claim-text-missing">
-              <span className="detail-label">Claim Statement</span>
-              <p className="claim-text-note">
-                Claim text not stored locally. <strong>Check the evidence link below</strong> — it may contain the original text.
-                Or paste it here to verify:
-              </p>
-              <div className="verify-form">
-                <textarea
-                  value={manualClaimText}
-                  onChange={(e) => { setManualClaimText(e.target.value); setVerificationStatus('none'); }}
-                  placeholder="Paste the original claim text to verify it matches the hash..."
-                  rows={3}
-                />
-                <button className="btn btn-secondary" onClick={verifyClaimText}>
-                  Verify Text Matches Hash
-                </button>
-                {verificationStatus === 'invalid' && (
-                  <p className="verify-error">✗ Text doesn't match the on-chain hash. Check for typos or extra whitespace.</p>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="claim-text-box">
+            <span className="detail-label">Claim Statement</span>
+            <p className="claim-text">{c.claimText}</p>
+          </div>
 
           <div className="detail-row">
             <span className="detail-label">Submitter</span>
@@ -221,34 +164,56 @@ export function ClaimDetail() {
             </div>
           )}
 
-          {challenge && (challenge as [string, bigint, bigint, boolean])[0] !== '0x0000000000000000000000000000000000000000' && (
+          {/* Existing Challenge Display */}
+          {hasChallenge && (
             <div className="challenge-info">
-              <h4>Challenge</h4>
-              <p>
-                Challenger: {shortenAddress((challenge as [string, bigint, bigint, boolean])[0])}
-                <br />
-                Stake: {formatEMET((challenge as [string, bigint, bigint, boolean])[1])} EMET
-              </p>
+              <h4>⚔️ Active Challenge</h4>
+              <div className="challenge-details">
+                <div className="detail-row">
+                  <span className="detail-label">Challenger</span>
+                  <a href={`https://basescan.org/address/${challengeData![0]}`} target="_blank" rel="noreferrer">
+                    {shortenAddress(challengeData![0])}
+                  </a>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Challenge Stake</span>
+                  <span className="stake-against">{formatEMET(challengeData![1])} EMET</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Started</span>
+                  <span>{timeAgo(Number(challengeData![2]))}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Resolved</span>
+                  <span>{challengeData![3] ? '✓ Yes' : '✕ Not yet'}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Challenge This Claim - Only for PENDING claims */}
+      {address && claimState === 'PENDING' && !hasChallenge && (
+        <div className="card action-card">
+          <ChallengeForm claimId={claimId} />
+        </div>
+      )}
+
+      {/* Stake For - for active/contested claims */}
       {address && (c.status === 0 || c.status === 1) && (
         <div className="card action-card">
-          <h3>Take Action</h3>
+          <h3>Stake For This Claim</h3>
           
-          {c.status === 0 && (
+          {c.status === 0 && !hasChallenge && (
             <div className="action-explainer">
-              <p><strong>🟢 Stake For:</strong> You believe this claim is TRUE. Stake EMET to support it and earn rewards if verified.</p>
-              <p><strong>🔴 Challenge:</strong> You believe this claim is FALSE. Stake EMET to dispute it. If you're right, you win the submitter's stake.</p>
+              <p><strong>🟢 Support:</strong> You believe this claim is TRUE. Stake EMET to support it and earn rewards if verified.</p>
             </div>
           )}
           
           {c.status === 1 && (
             <div className="action-explainer">
-              <p>⚠️ This claim is being challenged. You can still stake FOR it if you believe it's true.</p>
+              <p>⚠️ This claim is being challenged. Stake FOR it if you believe it's true — your stake strengthens the claim's defense.</p>
             </div>
           )}
 
@@ -263,50 +228,40 @@ export function ClaimDetail() {
             />
           </div>
           <div className="action-buttons">
-            {c.status === 0 && (
-              <>
-                <button className="btn btn-primary" onClick={handleStakeFor} disabled={stakeForHook.isPending}>
-                  🟢 Stake FOR (It's True)
-                </button>
-                <button className="btn btn-danger" onClick={handleChallenge} disabled={challengeHook.isPending}>
-                  🔴 Challenge (It's False)
-                </button>
-              </>
-            )}
-            {c.status === 1 && (
-              <button className="btn btn-primary" onClick={handleStakeFor} disabled={stakeForHook.isPending}>
-                🟢 Stake FOR (It's True)
-              </button>
-            )}
+            <button className="btn btn-primary" onClick={handleStakeFor} disabled={stakeForHook.isPending}>
+              🟢 Stake FOR (It's True)
+            </button>
           </div>
 
           {(stakeForHook.isPending || stakeForHook.isConfirming) && <p className="tx-status">⏳ Staking...</p>}
           {stakeForHook.isSuccess && <p className="tx-status success">✓ Staked successfully!</p>}
-          {(challengeHook.isPending || challengeHook.isConfirming) && <p className="tx-status">⏳ Challenging...</p>}
-          {challengeHook.isSuccess && <p className="tx-status success">✓ Challenge initiated!</p>}
           {(approveHook.isPending || approveHook.isConfirming) && <p className="tx-status">⏳ Approving tokens...</p>}
         </div>
       )}
 
-      {/* Resolve / Verify */}
+      {/* Resolve Challenge */}
       {c.status === 1 && canResolve && (
         <div className="card action-card">
           <button className="btn btn-primary btn-full" onClick={() => resolveHook.resolve(claimId)} disabled={resolveHook.isPending}>
-            Resolve Challenge
+            ⚖️ Resolve Challenge
           </button>
           {resolveHook.isConfirming && <p className="tx-status">⏳ Resolving...</p>}
           {resolveHook.isSuccess && <p className="tx-status success">✓ Challenge resolved!</p>}
         </div>
       )}
 
-      {c.status === 0 && (
+      {/* Verify Unchallenged */}
+      {claimState === 'UNCONTESTED' && (
         <div className="card action-card">
+          <div className="action-explainer">
+            <p>The challenge period has ended with no challenges. This claim can now be verified.</p>
+          </div>
           <button className="btn btn-secondary btn-full" onClick={() => verifyHook.verify(claimId)} disabled={verifyHook.isPending}>
-            Verify (if challenge period ended)
+            ✓ Verify Unchallenged Claim
           </button>
           {verifyHook.isConfirming && <p className="tx-status">⏳ Verifying...</p>}
           {verifyHook.isSuccess && <p className="tx-status success">✓ Claim verified!</p>}
-          {verifyHook.error && <p className="tx-status error">Challenge period not over yet.</p>}
+          {verifyHook.error && <p className="tx-status error">Could not verify — challenge period may not be over yet.</p>}
         </div>
       )}
     </div>

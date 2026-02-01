@@ -1,7 +1,12 @@
 import { useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits, keccak256, toBytes } from 'viem';
+import { useQueryClient } from '@tanstack/react-query';
+import { parseUnits } from 'viem';
+import { useEffect } from 'react';
 import { CONTRACTS } from '../contracts/addresses';
 import { EMETRegistryABI, EMETStakeABI, EMETChallengeABI, EMETReputationABI, EMETTokenABI } from '../contracts/abis';
+
+// Refetch interval for live data (ms)
+const LIVE = 6000;
 
 // ============ Read Hooks ============
 
@@ -10,6 +15,7 @@ export function useClaimCount() {
     address: CONTRACTS.EMETRegistry as `0x${string}`,
     abi: EMETRegistryABI,
     functionName: 'claimCount',
+    query: { refetchInterval: LIVE },
   });
 }
 
@@ -35,6 +41,7 @@ export function useClaim(claimId: bigint) {
     abi: EMETRegistryABI,
     functionName: 'getClaim',
     args: [claimId],
+    query: { refetchInterval: LIVE },
   });
 }
 
@@ -44,6 +51,7 @@ export function useStakeTotals(claimId: bigint) {
     abi: EMETStakeABI,
     functionName: 'getStakeTotals',
     args: [claimId],
+    query: { refetchInterval: LIVE },
   });
 }
 
@@ -53,7 +61,7 @@ export function useUserStakes(claimId: bigint, staker: `0x${string}` | undefined
     abi: EMETStakeABI,
     functionName: 'getUserStakes',
     args: staker ? [claimId, staker] : undefined,
-    query: { enabled: !!staker },
+    query: { enabled: !!staker, refetchInterval: LIVE },
   });
 }
 
@@ -63,6 +71,7 @@ export function useChallenge(claimId: bigint) {
     abi: EMETChallengeABI,
     functionName: 'getChallenge',
     args: [claimId],
+    query: { refetchInterval: LIVE },
   });
 }
 
@@ -72,6 +81,7 @@ export function useCanResolve(claimId: bigint) {
     abi: EMETChallengeABI,
     functionName: 'canResolve',
     args: [claimId],
+    query: { refetchInterval: LIVE },
   });
 }
 
@@ -101,7 +111,7 @@ export function useTokenBalance(account: `0x${string}` | undefined) {
     abi: EMETTokenABI,
     functionName: 'balanceOf',
     args: account ? [account] : undefined,
-    query: { enabled: !!account },
+    query: { enabled: !!account, refetchInterval: LIVE },
   });
 }
 
@@ -111,7 +121,7 @@ export function useTokenAllowance(owner: `0x${string}` | undefined, spender: str
     abi: EMETTokenABI,
     functionName: 'allowance',
     args: owner ? [owner, spender as `0x${string}`] : undefined,
-    query: { enabled: !!owner },
+    query: { enabled: !!owner, refetchInterval: LIVE },
   });
 }
 
@@ -125,7 +135,20 @@ export function useClaims(start: number, count: number) {
       functionName: 'getClaim' as const,
       args: [id] as const,
     })),
+    query: { refetchInterval: LIVE },
   });
+}
+
+// ============ Invalidation Helper ============
+
+function useInvalidateOnSuccess(hash: `0x${string}` | undefined, isSuccess: boolean) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (isSuccess && hash) {
+      // Invalidate all wagmi read queries so everything refreshes
+      queryClient.invalidateQueries();
+    }
+  }, [isSuccess, hash, queryClient]);
 }
 
 // ============ Write Hooks ============
@@ -133,6 +156,7 @@ export function useClaims(start: number, count: number) {
 export function useApproveEMET() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const approve = (spender: string, amount: bigint) => {
     writeContract({
@@ -149,15 +173,15 @@ export function useApproveEMET() {
 export function useSubmitClaim() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const submit = (claimText: string, evidenceURI: string, stakeAmount: string) => {
-    const claimHash = keccak256(toBytes(claimText));
     const stake = parseUnits(stakeAmount, 18);
     writeContract({
       address: CONTRACTS.EMETRegistry as `0x${string}`,
       abi: EMETRegistryABI,
       functionName: 'submitClaim',
-      args: [claimHash, evidenceURI, stake],
+      args: [claimText, evidenceURI, stake],
     });
   };
 
@@ -167,6 +191,7 @@ export function useSubmitClaim() {
 export function useStakeFor() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const stakeFor = (claimId: bigint, amount: string) => {
     writeContract({
@@ -183,6 +208,7 @@ export function useStakeFor() {
 export function useInitiateChallenge() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const challenge = (claimId: bigint, stake: string) => {
     writeContract({
@@ -199,6 +225,7 @@ export function useInitiateChallenge() {
 export function useResolveChallenge() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const resolve = (claimId: bigint) => {
     writeContract({
@@ -215,6 +242,7 @@ export function useResolveChallenge() {
 export function useVerifyUnchallenged() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  useInvalidateOnSuccess(hash, isSuccess);
 
   const verify = (claimId: bigint) => {
     writeContract({

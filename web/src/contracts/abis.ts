@@ -23,6 +23,7 @@ export const EMETRegistryABI = [
       name: 'claim', type: 'tuple',
       components: [
         { name: 'claimHash', type: 'bytes32' },
+        { name: 'claimText', type: 'string' },
         { name: 'evidenceURI', type: 'string' },
         { name: 'submitter', type: 'address' },
         { name: 'timestamp', type: 'uint256' },
@@ -40,7 +41,7 @@ export const EMETRegistryABI = [
   {
     type: 'function', name: 'submitClaim',
     inputs: [
-      { name: 'claimHash', type: 'bytes32' },
+      { name: 'claimText', type: 'string' },
       { name: 'evidenceURI', type: 'string' },
       { name: 'stake', type: 'uint256' },
     ],
@@ -55,6 +56,7 @@ export const EMETRegistryABI = [
       { name: 'claimId', type: 'uint256', indexed: true },
       { name: 'claimHash', type: 'bytes32', indexed: true },
       { name: 'submitter', type: 'address', indexed: true },
+      { name: 'claimText', type: 'string', indexed: false },
       { name: 'evidenceURI', type: 'string', indexed: false },
       { name: 'stake', type: 'uint256', indexed: false },
       { name: 'timestamp', type: 'uint256', indexed: false },

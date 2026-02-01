@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useClaimCount, useClaims } from '../hooks/useProtocol';
-import { StatusBadge } from '../components/StatusBadge';
-import { formatEMET, shortenAddress, timeAgo } from '../lib/format';
+import { ClaimStateBadge } from '../components/ClaimStateBadge';
+import { formatEMET, shortenAddress, timeAgo, getClaimState, type ClaimState } from '../lib/format';
 
 const PAGE_SIZE = 10;
 
@@ -10,7 +10,7 @@ export function ClaimsList() {
   const { data: claimCount, isLoading } = useClaimCount();
   const total = claimCount !== undefined ? Number(claimCount) : 0;
   const [page, setPage] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<number | null>(null);
+  const [filterState, setFilterState] = useState<ClaimState | null>(null);
 
   const start = Math.max(0, total - (page + 1) * PAGE_SIZE);
   const count = Math.min(PAGE_SIZE, total - page * PAGE_SIZE);
@@ -26,6 +26,7 @@ export function ClaimsList() {
       if (r.status !== 'success' || !r.result) return null;
       const c = r.result as {
         claimHash: string;
+        claimText: string;
         evidenceURI: string;
         submitter: string;
         timestamp: bigint;
@@ -33,10 +34,10 @@ export function ClaimsList() {
         challengeEnd: bigint;
         status: number;
       };
-      return { id: start + i, ...c };
+      return { id: start + i, ...c, claimState: getClaimState(c.status, c.challengeEnd) };
     })
     .filter(Boolean)
-    .filter((c) => filterStatus === null || c!.status === filterStatus)
+    .filter((c) => filterState === null || c!.claimState === filterState)
     .reverse(); // newest first
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -47,17 +48,18 @@ export function ClaimsList() {
       <p className="page-subtitle">{total} claims registered on the EMET Protocol</p>
 
       <div className="filter-bar">
-        {[
+        {([
           { value: null, label: 'All' },
-          { value: 0, label: 'Active' },
-          { value: 1, label: 'Challenged' },
-          { value: 2, label: 'Verified' },
-          { value: 3, label: 'Rejected' },
-        ].map((f) => (
+          { value: 'PENDING' as ClaimState, label: '⏳ Pending' },
+          { value: 'CONTESTED' as ClaimState, label: '⚔️ Contested' },
+          { value: 'VERIFIED' as ClaimState, label: '✓ Verified' },
+          { value: 'UNCONTESTED' as ClaimState, label: '○ Uncontested' },
+          { value: 'REJECTED' as ClaimState, label: '✕ Rejected' },
+        ]).map((f) => (
           <button
             key={String(f.value)}
-            className={`filter-btn ${filterStatus === f.value ? 'active' : ''}`}
-            onClick={() => setFilterStatus(f.value)}
+            className={`filter-btn ${filterState === f.value ? 'active' : ''}`}
+            onClick={() => setFilterState(f.value)}
           >
             {f.label}
           </button>
@@ -71,12 +73,12 @@ export function ClaimsList() {
           <Link to={`/claims/${claim.id}`} key={claim.id} className="claim-row">
             <div className="claim-row-header">
               <span className="claim-id">#{claim.id}</span>
-              <StatusBadge status={claim.status} />
+              <ClaimStateBadge status={claim.status} challengeEnd={claim.challengeEnd} />
             </div>
             <div className="claim-row-body">
-              <span className="claim-evidence" title={claim.evidenceURI}>
-                {claim.evidenceURI.length > 60 ? claim.evidenceURI.slice(0, 60) + '...' : claim.evidenceURI}
-              </span>
+              <p className="claim-text-preview">
+                {claim.claimText.length > 120 ? claim.claimText.slice(0, 120) + '...' : claim.claimText}
+              </p>
             </div>
             <div className="claim-row-footer">
               <span>{shortenAddress(claim.submitter)}</span>

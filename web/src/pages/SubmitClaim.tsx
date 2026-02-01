@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { parseUnits, keccak256, toBytes } from 'viem';
+import { parseUnits } from 'viem';
 import { useSubmitClaim, useApproveEMET, useMinimumStake, useTokenBalance, useTokenAllowance } from '../hooks/useProtocol';
 import { CONTRACTS } from '../contracts/addresses';
 import { formatEMET } from '../lib/format';
-import { saveClaim } from '../lib/claimStorage';
 
 export function SubmitClaim() {
   const { address, isConnected } = useAccount();
@@ -22,10 +21,12 @@ export function SubmitClaim() {
 
   useEffect(() => {
     if (approveSuccess) {
-      refetchAllowance();
-      setStep('submit');
+      refetchAllowance().then(() => {
+        setStep('submit');
+        submit(claimText, evidenceURL, stakeAmount);
+      });
     }
-  }, [approveSuccess, refetchAllowance]);
+  }, [approveSuccess]);
 
   useEffect(() => {
     if (submitSuccess) setStep('done');
@@ -38,10 +39,6 @@ export function SubmitClaim() {
     e.preventDefault();
     if (!claimText || !evidenceURL || !stakeAmount) return;
 
-    // Save claim text locally (hash is what goes on-chain)
-    const claimHash = keccak256(toBytes(claimText));
-    saveClaim(claimHash, claimText);
-
     if (needsApproval) {
       setStep('approve');
       approve(CONTRACTS.EMETRegistry, stakeWei);
@@ -52,9 +49,6 @@ export function SubmitClaim() {
   };
 
   const handleProceedSubmit = () => {
-    // Save claim text locally before submitting
-    const claimHash = keccak256(toBytes(claimText));
-    saveClaim(claimHash, claimText);
     submit(claimText, evidenceURL, stakeAmount);
   };
 
@@ -101,7 +95,7 @@ export function SubmitClaim() {
             rows={4}
             required
           />
-          <small>This will be hashed (keccak256) and stored on-chain.</small>
+          <small>This text will be stored on-chain with its keccak256 hash.</small>
         </div>
 
         <div className="form-group">

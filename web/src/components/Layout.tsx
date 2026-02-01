@@ -1,10 +1,11 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { WalletButton } from './WalletButton';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home' },
   { path: '/submit', label: 'Submit Claim' },
   { path: '/claims', label: 'Claims' },
+  { path: '/concentration', label: 'Concentration' },
   { path: '/activity', label: 'My Activity' },
 ];
 
@@ -29,7 +30,7 @@ export function Layout() {
               </Link>
             ))}
           </nav>
-          <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+          <WalletButton />
         </div>
       </header>
       <main className="main">
@@ -38,7 +39,7 @@ export function Layout() {
       <footer className="footer">
         <p>
           EMET Protocol on{' '}
-          <a href="https://basescan.org/address/0x9D2550eB1Ee613E0f35c70524e1304B26392b0aC" target="_blank" rel="noreferrer">
+          <a href="https://basescan.org/address/0x69FC0F525F15DFB57e762cD2c570114433AFc6e2" target="_blank" rel="noreferrer">
             Base
           </a>{' '}
           · Trustless truth verification
