@@ -23,7 +23,14 @@
 ## Phase 2: Jury System & Hardening — IN PROGRESS
 *Target: Q2 2026*
 
-- [ ] Wire ChallengeV3 to web UI (challenge form with evidence + tier)
+- [x] Wire ChallengeV3 to web UI (challenge form with evidence + tier)
+- [x] Deploy governance contracts: JuryPool, ChallengeV3, JurorStake, HumanOracle
+- [x] Deploy trust contracts: SybilResistance, Concentration, Whistleblower
+- [x] Deploy verification contracts: CrossModel, Decay
+- [x] Wire contracts together (JuryPool→V3, Concentration→Stake, SybilResistance→Reputation+V3)
+- [x] Remove all mock data from UI (real on-chain data only)
+- [x] Economics model (fee structure, break-even analysis)
+- [ ] Implement economics in contracts (claim fees, resolution fees, Bootstrap) — in progress
 - [ ] Deploy remaining: Precedent, LPRewards
 - [ ] Event indexer for per-wallet staking data
 - [ ] First jury trial (end-to-end challenge → jury → resolution)
