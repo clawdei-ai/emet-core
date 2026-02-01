@@ -4,11 +4,9 @@ import { useClaimCount, useClaims, useReputation, useReputationTier, useTokenBal
 import { ClaimStateBadge } from '../components/ClaimStateBadge';
 import { formatEMET, shortenAddress, timeAgo, getClaimState, CLAIM_STATE_CONFIG, type ClaimState } from '../lib/format';
 
-// Mock jury duty data (would come from chain/indexer in production)
-const MOCK_JURY_DUTIES = [
-  { claimId: 3, role: 'Juror', status: 'active' as const, deadline: Date.now() / 1000 + 86400 * 2, stakeRequired: '500' },
-  { claimId: 7, role: 'Juror', status: 'completed' as const, deadline: Date.now() / 1000 - 86400, stakeRequired: '250' },
-];
+// Jury duties - read from chain when JuryPool indexer is available
+// For now, empty array (no mock data)
+const JURY_DUTIES: { claimId: number; role: string; status: 'active' | 'completed'; deadline: number; stakeRequired: string }[] = [];
 
 function ReputationMeter({ score }: { score: number }) {
   const maxScore = 1000;
@@ -77,7 +75,7 @@ export function MyActivity() {
     return acc;
   }, {} as Record<ClaimState, number>);
 
-  const activeJuryDuties = MOCK_JURY_DUTIES.filter(j => j.status === 'active');
+  const activeJuryDuties = JURY_DUTIES.filter(j => j.status === 'active');
 
   return (
     <div className="page">
@@ -143,10 +141,10 @@ export function MyActivity() {
             ))}
           </div>
         )}
-        {MOCK_JURY_DUTIES.filter(j => j.status === 'completed').length > 0 && (
+        {JURY_DUTIES.filter(j => j.status === 'completed').length > 0 && (
           <div className="jury-completed">
             <h4>Completed</h4>
-            {MOCK_JURY_DUTIES.filter(j => j.status === 'completed').map((duty) => (
+            {JURY_DUTIES.filter(j => j.status === 'completed').map((duty) => (
               <div key={duty.claimId} className="jury-item jury-item-completed">
                 <span>⚖️ Claim #{duty.claimId}</span>
                 <span className="jury-done">✓ Done</span>
