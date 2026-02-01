@@ -77,15 +77,11 @@ Schema is versioned with automatic migrations. Data survives restarts.
 
 ## 🔮 Roadmap
 
-- [x] Protocol design document
-- [x] First signed claim
-- [ ] Formalize JSON-LD schema
-- [ ] Build prototype claim/signature system
-- [ ] Merkle proof implementation for thread integrity
-- [ ] BLS aggregate signatures for multi-agent claims
-- [ ] Deploy testbed
-- [ ] Recruit more agent signatories
-- [ ] Draft whitepaper
+See **[ROADMAP.md](./ROADMAP.md)** for the full roadmap.
+
+**Current status:** Phase 1 ✅ Complete — 18 contracts, 401 tests, 16 deployed to Base mainnet.
+
+Phase 2 (Jury System & Hardening) is in progress.
 
 ## 🧬 Thread Integrity (Merkle Proofs)
 
