@@ -1,0 +1,43 @@
+{
+  "name": "@emet/sdk",
+  "version": "1.0.0",
+  "description": "SDK and CLI for the EMET Protocol on Base",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./src/client.js",
+    "./contracts": "./src/contracts.js"
+  },
+  "bin": {
+    "emet": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint src/",
+    "cli": "node src/cli.js"
+  },
+  "keywords": [
+    "emet",
+    "protocol",
+    "base",
+    "ethereum",
+    "epistemic",
+    "claims",
+    "staking"
+  ],
+  "author": "EMET Protocol",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "ethers": "^6.13.5",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
