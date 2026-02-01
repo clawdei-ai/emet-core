@@ -115,24 +115,25 @@ contract EMETProtocolTest is Test {
     // ============ Registry Tests ============
     
     function test_SubmitClaim() public {
-        bytes32 claimHash = keccak256("Test claim");
+        string memory claimText = "Test claim";
         string memory evidenceURI = "ipfs://QmTest";
         
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(claimHash, evidenceURI, MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim(claimText, evidenceURI, MINIMUM_STAKE);
         
         assertEq(claimId, 0);
         assertEq(registry.claimCount(), 1);
         
         EMETRegistry.Claim memory claim = registry.getClaim(claimId);
-        assertEq(claim.claimHash, claimHash);
+        assertEq(claim.claimHash, keccak256(bytes(claimText)));
+        assertEq(keccak256(bytes(claim.claimText)), keccak256(bytes(claimText)));
         assertEq(claim.submitter, alice);
         assertEq(claim.stake, MINIMUM_STAKE);
         assertEq(uint256(claim.status), uint256(EMETRegistry.ClaimStatus.Active));
     }
     
     function test_SubmitClaim_InsufficientStake() public {
-        bytes32 claimHash = keccak256("Test claim");
+        string memory claimText = "Test claim";
         string memory evidenceURI = "ipfs://QmTest";
         
         vm.prank(alice);
@@ -143,14 +144,12 @@ contract EMETProtocolTest is Test {
                 MINIMUM_STAKE
             )
         );
-        registry.submitClaim(claimHash, evidenceURI, 50e18);
+        registry.submitClaim(claimText, evidenceURI, 50e18);
     }
     
     function test_VerifyUnchallenged() public {
-        bytes32 claimHash = keccak256("Test claim");
-        
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(claimHash, "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Test claim", "ipfs://test", MINIMUM_STAKE);
         
         uint256 balanceBefore = emet.balanceOf(alice);
         
@@ -160,7 +159,7 @@ contract EMETProtocolTest is Test {
         registry.verifyUnchallenged(claimId);
         
         EMETRegistry.Claim memory claim = registry.getClaim(claimId);
-        assertEq(uint256(claim.status), uint256(EMETRegistry.ClaimStatus.Verified));
+        assertEq(uint256(claim.status), uint256(EMETRegistry.ClaimStatus.Uncontested));
         
         // Stake should be returned
         assertEq(emet.balanceOf(alice), balanceBefore + MINIMUM_STAKE);
@@ -171,7 +170,7 @@ contract EMETProtocolTest is Test {
     function test_InitiateChallenge() public {
         // Alice submits claim
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         // Bob challenges
         vm.prank(bob);
@@ -188,7 +187,7 @@ contract EMETProtocolTest is Test {
     
     function test_CannotChallengeSelf() public {
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         vm.prank(alice);
         vm.expectRevert(EMETChallenge.CannotChallengeOwnClaim.selector);
@@ -198,7 +197,7 @@ contract EMETProtocolTest is Test {
     function test_ResolveChallenge_ClaimVerified() public {
         // Alice submits claim with 100 EMET
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         // Bob challenges with 50 EMET
         vm.prank(bob);
@@ -224,7 +223,7 @@ contract EMETProtocolTest is Test {
     function test_ResolveChallenge_ClaimRejected() public {
         // Alice submits claim with 100 EMET
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         // Bob challenges with 150 EMET (more than claim stake)
         vm.prank(bob);
@@ -246,7 +245,7 @@ contract EMETProtocolTest is Test {
     
     function test_StakeFor() public {
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         vm.prank(bob);
         stakeContract.stakeFor(claimId, 50e18);
@@ -262,7 +261,7 @@ contract EMETProtocolTest is Test {
     function test_Withdraw_Winner() public {
         // Setup: Alice claims, Bob challenges, Charlie supports, claim verified
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         vm.prank(bob);
         challengeContract.initiateChallenge(claimId, 100e18);
@@ -288,7 +287,7 @@ contract EMETProtocolTest is Test {
     
     function test_CanVerifyUnchallenged() public {
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         assertFalse(registry.canVerifyUnchallenged(claimId));
         
@@ -299,7 +298,7 @@ contract EMETProtocolTest is Test {
     
     function test_GetCurrentStanding() public {
         vm.prank(alice);
-        uint256 claimId = registry.submitClaim(keccak256("claim"), "ipfs://test", MINIMUM_STAKE);
+        uint256 claimId = registry.submitClaim("Autonomous AI agents can collaborate across model boundaries", "ipfs://test", MINIMUM_STAKE);
         
         vm.prank(bob);
         challengeContract.initiateChallenge(claimId, 50e18);

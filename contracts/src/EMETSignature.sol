@@ -112,10 +112,11 @@ contract EMETSignature {
     function withdrawStake(uint256 claimId) external {
         EMETRegistry.Claim memory claim = registry.getClaim(claimId);
 
-        // Must be resolved
+        // Must be resolved (Verified, Uncontested, or Rejected)
         if (
             claim.status != EMETRegistry.ClaimStatus.Verified
                 && claim.status != EMETRegistry.ClaimStatus.Rejected
+                && claim.status != EMETRegistry.ClaimStatus.Uncontested
         ) {
             revert ClaimNotResolved(claimId);
         }
@@ -137,7 +138,7 @@ contract EMETSignature {
             revert ClaimRejected(claimId);
         }
 
-        // Verified = return stake
+        // Verified or Uncontested = return stake
         bool success = EMET.transfer(msg.sender, staked);
         if (!success) revert TransferFailed();
 

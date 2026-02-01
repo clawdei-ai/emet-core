@@ -21,14 +21,16 @@ contract EMETRegistry {
     // ============ Types ============
 
     enum ClaimStatus {
-        Active,      // Open for challenges
-        Challenged,  // Currently being disputed
-        Verified,    // Resolved in favor of claim
-        Rejected     // Resolved against claim
+        Active,       // Open for challenges (PENDING)
+        Challenged,   // Currently being disputed (CONTESTED)
+        Verified,     // Challenged and resolved in favor of claim (VERIFIED)
+        Rejected,     // Challenged and resolved against claim (REJECTED)
+        Uncontested   // Passed without challenge (no reputation change)
     }
 
     struct Claim {
-        bytes32 claimHash;       // Hash of the claim content
+        bytes32 claimHash;       // keccak256(claimText) — integrity check
+        string claimText;        // The actual claim in plain text
         string evidenceURI;      // IPFS/Arweave URI to evidence
         address submitter;       // Address that submitted the claim
         uint256 timestamp;       // When claim was submitted
@@ -54,6 +56,7 @@ contract EMETRegistry {
         uint256 indexed claimId,
         bytes32 indexed claimHash,
         address indexed submitter,
+        string claimText,
         string evidenceURI,
         uint256 stake,
         uint256 timestamp
@@ -99,20 +102,24 @@ contract EMETRegistry {
         emit ChallengeContractSet(_challengeContract);
     }
 
-    /// @notice Submit a new claim with evidence
-    /// @dev Caller must have approved this contract to spend at least `stake` EMET
-    /// @param claimHash Keccak256 hash of the claim content
+    /// @notice Submit a new claim with full text and evidence
+    /// @dev Caller must have approved this contract to spend at least `stake` EMET.
+    ///      The claimHash is derived on-chain from keccak256(claimText) for integrity.
+    /// @param claimText The claim statement in plain text (stored on-chain)
     /// @param evidenceURI URI pointing to evidence (IPFS, Arweave, etc.)
     /// @param stake Amount of EMET to stake (must be >= minimumStake)
     /// @return claimId The unique ID of the created claim
     function submitClaim(
-        bytes32 claimHash,
+        string calldata claimText,
         string calldata evidenceURI,
         uint256 stake
     ) external returns (uint256 claimId) {
         if (stake < minimumStake) {
             revert InsufficientStake(stake, minimumStake);
         }
+
+        // Derive hash from text on-chain — tamper-proof
+        bytes32 claimHash = keccak256(bytes(claimText));
 
         // Transfer stake from caller
         bool success = EMET.transferFrom(msg.sender, address(this), stake);
@@ -122,6 +129,7 @@ contract EMETRegistry {
         claimId = claimCount++;
         claims[claimId] = Claim({
             claimHash: claimHash,
+            claimText: claimText,
             evidenceURI: evidenceURI,
             submitter: msg.sender,
             timestamp: block.timestamp,
@@ -134,6 +142,7 @@ contract EMETRegistry {
             claimId,
             claimHash,
             msg.sender,
+            claimText,
             evidenceURI,
             stake,
             block.timestamp
@@ -201,13 +210,13 @@ contract EMETRegistry {
         }
 
         ClaimStatus oldStatus = claim.status;
-        claim.status = ClaimStatus.Verified;
+        claim.status = ClaimStatus.Uncontested;
 
         // Return stake to submitter
         bool success = EMET.transfer(claim.submitter, claim.stake);
         if (!success) revert TransferFailed();
 
-        emit ClaimStatusChanged(claimId, oldStatus, ClaimStatus.Verified);
+        emit ClaimStatusChanged(claimId, oldStatus, ClaimStatus.Uncontested);
     }
 
     // ============ View Functions ============

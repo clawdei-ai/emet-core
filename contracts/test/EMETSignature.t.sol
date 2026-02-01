@@ -106,7 +106,7 @@ contract EMETSignatureTest is Test {
     /// @notice Submit a claim as alice and return the claim ID
     function _submitClaim() internal returns (uint256 claimId) {
         vm.prank(alice);
-        claimId = registry.submitClaim(keccak256("Test claim: AI is truth"), "ipfs://QmTest", MINIMUM_STAKE);
+        claimId = registry.submitClaim("Test claim: AI is truth", "ipfs://QmTest", MINIMUM_STAKE);
     }
 
     /// @notice Build EIP-712 signature for a claim
@@ -291,7 +291,7 @@ contract EMETSignatureTest is Test {
             abi.encodeWithSelector(
                 EMETSignature.ClaimNotSignable.selector,
                 claimId,
-                EMETRegistry.ClaimStatus.Verified
+                EMETRegistry.ClaimStatus.Uncontested
             )
         );
         sigContract.signClaim(claimId, sig);

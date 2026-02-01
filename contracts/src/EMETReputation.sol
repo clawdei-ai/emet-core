@@ -46,6 +46,15 @@ contract EMETReputation {
     /// @notice Maximum multiplier (2.0x)
     uint256 public constant MAX_MULTIPLIER = 2e18;
 
+    /// @notice Overconfidence penalty multiplier (2x loss for >95% confidence + wrong)
+    int256 public constant OVERCONFIDENCE_PENALTY_MULTIPLIER = 2;
+
+    /// @notice Overconfidence threshold in basis points (95% = 9500)
+    uint256 public constant OVERCONFIDENCE_THRESHOLD_BPS = 9500;
+
+    /// @notice Novelty score precision (basis points)
+    uint256 public constant NOVELTY_PRECISION = 10_000;
+
     // ============ State ============
 
     /// @notice Reputation score per address (signed, can be negative)
@@ -143,6 +152,45 @@ contract EMETReputation {
         for (uint256 i = 0; i < cosigners.length; i++) {
             _updateReputation(cosigners[i], COSIGN_VERIFIED_POINTS, "cosign_verified");
         }
+    }
+
+    /// @notice Record no reputation change for an uncontested claim
+    /// @dev Emits event for tracking but applies zero delta
+    /// @param submitter The claim submitter address
+    function recordClaimUncontested(address submitter) external {
+        _onlyUpdater();
+        int256 score = reputation[submitter];
+        emit ReputationUpdated(submitter, score, score, 0, "claim_uncontested");
+        totalUpdates++;
+    }
+
+    /// @notice Record reputation for a verified claim with novelty score multiplier
+    /// @dev Novelty score amplifies the base reward: 10000 = 1x, 20000 = 2x, etc.
+    /// @param submitter The claim submitter address
+    /// @param noveltyBps Novelty score in basis points (10000 = 1.0x baseline)
+    function recordClaimVerifiedWithNovelty(address submitter, uint256 noveltyBps) external {
+        _onlyUpdater();
+        int256 adjustedPoints = (CLAIM_VERIFIED_POINTS * int256(noveltyBps)) / int256(NOVELTY_PRECISION);
+        if (adjustedPoints < 1) adjustedPoints = 1; // minimum 1 point
+        _updateReputation(submitter, adjustedPoints, "claim_verified_novel");
+    }
+
+    /// @notice Apply overconfidence penalty (2x loss for >95% confidence + wrong)
+    /// @dev Called when someone stakes with overwhelming confidence and loses
+    /// @param account The penalized address
+    function recordOverconfidencePenalty(address account) external {
+        _onlyUpdater();
+        int256 penalty = CLAIM_REJECTED_POINTS * OVERCONFIDENCE_PENALTY_MULTIPLIER;
+        _updateReputation(account, penalty, "overconfidence_penalty");
+    }
+
+    /// @notice Check if a stake ratio constitutes overconfidence
+    /// @param stakeAmount The individual's stake
+    /// @param totalPool The total stake pool
+    /// @return isOverconfident True if stake exceeds 95% of pool
+    function isOverconfident(uint256 stakeAmount, uint256 totalPool) external pure returns (bool) {
+        if (totalPool == 0) return false;
+        return (stakeAmount * 10_000) / totalPool >= OVERCONFIDENCE_THRESHOLD_BPS;
     }
 
     // ============ Internal ============

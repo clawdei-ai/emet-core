@@ -68,6 +68,7 @@ contract EMETStake {
     error ChallengeContractAlreadySet();
     error OnlyChallengeContract();
     error ZeroAddress();
+    error CannotStakeOnOwnClaim();
 
     // ============ Constructor ============
 
@@ -112,6 +113,9 @@ contract EMETStake {
             revert ClaimNotActive(claimId);
         }
 
+        // Self-stake prevention (defense in depth)
+        if (staker == claim.submitter) revert CannotStakeOnOwnClaim();
+
         // Update stakes
         stakes[claimId][staker][false] += amount;
         claimStakes[claimId].totalAgainst += amount;
@@ -127,13 +131,15 @@ contract EMETStake {
 
         EMETRegistry.Claim memory claim = registry.getClaim(claimId);
         
-        // Must be resolved
+        // Must be resolved (Verified, Rejected, or Uncontested)
         if (claim.status != EMETRegistry.ClaimStatus.Verified && 
-            claim.status != EMETRegistry.ClaimStatus.Rejected) {
+            claim.status != EMETRegistry.ClaimStatus.Rejected &&
+            claim.status != EMETRegistry.ClaimStatus.Uncontested) {
             revert ClaimNotResolved(claimId);
         }
 
-        bool claimVerified = claim.status == EMETRegistry.ClaimStatus.Verified;
+        bool claimVerified = (claim.status == EMETRegistry.ClaimStatus.Verified ||
+                              claim.status == EMETRegistry.ClaimStatus.Uncontested);
         
         // Get user's stakes
         uint256 userStakeFor = stakes[claimId][msg.sender][true];
@@ -194,6 +200,9 @@ contract EMETStake {
 
         // Verify claim exists and is stakeable
         EMETRegistry.Claim memory claim = registry.getClaim(claimId);
+
+        // Self-stake prevention: cannot stake on own claim
+        if (msg.sender == claim.submitter) revert CannotStakeOnOwnClaim();
         
         // Can only stake FOR on active or challenged claims
         if (isFor) {
