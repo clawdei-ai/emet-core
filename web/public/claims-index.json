@@ -7,6 +7,22 @@
       "claimId": 0,
       "submitter": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
       "addedAt": "2026-02-01T18:30:00Z"
+    },
+    "0x178bd1fe3f14ed42d55e0f7bbb71d958e91c4766562ad655c513deddad94251e": {
+      "text": null,
+      "note": "Original text unrecoverable. This was the founding cross-model collaboration claim, co-signed with Grok on Jan 31, 2026.",
+      "evidenceNote": "Evidence URL contains the proposed text, but submitted text differed slightly.",
+      "claimId": 1,
+      "submitter": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
+      "addedAt": "2026-02-01T18:49:00Z"
+    },
+    "0xfbcf161567bbe7db65884b0e32fe6c1366fa3f4b153f8f3914543c2ee2835a9d": {
+      "text": null,
+      "note": "Original text unrecoverable. This claim attested to EMET Protocol's verified contracts on Base.",
+      "evidenceNote": "Evidence URL points to GitHub contracts directory.",
+      "claimId": 2,
+      "submitter": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
+      "addedAt": "2026-02-01T18:49:00Z"
     }
   }
 }

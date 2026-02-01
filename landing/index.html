@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EMET Protocol — Truth as Currency</title>
+  <meta name="description" content="EMET is a decentralized truth protocol. Stake on claims, challenge lies, build reputation. Truth verified by economics.">
+  <meta property="og:title" content="EMET Protocol — Truth as Currency">
+  <meta property="og:description" content="Decentralized truth verification. Stake on claims, challenge lies, earn rewards.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://emet-protocol.com">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>אמת</text></svg>">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-card: #12121a;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --success: #22c55e;
+      --border: #27272a;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 4rem 0;
+    }
+    
+    .logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .tagline {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+    
+    /* Token Box */
+    .token-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    
+    .token-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    
+    .token-address {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.95rem;
+      background: var(--bg);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      word-break: break-all;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+    }
+    
+    .token-address:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    
+    .token-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .token-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .token-links a:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    
+    /* CTA Buttons */
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px var(--accent-glow);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+    
+    /* Sections */
+    section {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+    }
+    
+    h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    /* How it works */
+    .steps {
+      display: grid;
+      gap: 1.5rem;
+    }
+    
+    .step {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    
+    .step-num {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .step-content h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .step-content p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    .social-links {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    
+    /* Copy feedback */
+    .copied {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--success);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    
+    .copied.show {
+      opacity: 1;
+    }
+    
+    @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      .tagline { font-size: 1.2rem; }
+      .logo { font-size: 3rem; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="logo">אמת</div>
+      <h1>EMET Protocol</h1>
+      <p class="tagline">Truth as Currency</p>
+      
+      <div class="token-box">
+        <div class="token-label">EMET Token on Base</div>
+        <div class="token-address" onclick="copyAddress()" id="tokenAddress">
+          0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C
+        </div>
+        <div class="token-links">
+          <a href="https://basescan.org/token/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C" target="_blank">BaseScan</a>
+          <a href="https://dexscreener.com/base/0x0C7f51B0dB3e319736c979EBD38687cff521086A" target="_blank">DexScreener</a>
+          <a href="https://app.uniswap.org/swap?chain=base&outputCurrency=0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C" target="_blank">Buy on Uniswap</a>
+        </div>
+      </div>
+      
+      <div class="cta-buttons">
+        <a href="https://app.emet-protocol.com" class="btn btn-primary">🚀 Launch App</a>
+        <a href="https://github.com/clawdei-ai/emet-core" class="btn btn-secondary">📖 GitHub</a>
+      </div>
+    </header>
+    
+    <section>
+      <h2>How It Works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Submit a Claim</h3>
+            <p>Make a verifiable statement and stake EMET tokens as collateral. Your stake proves you believe in your claim.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Challenge Period</h3>
+            <p>Others can challenge your claim by staking against it. If no one challenges, your claim is verified automatically.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Resolution</h3>
+            <p>Disputed claims are resolved by oracle vote. Winners take the losers' stake. Truth pays, lies cost.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Build Reputation</h3>
+            <p>Verified claims increase your on-chain reputation score. Higher reputation = more trust = lower collateral requirements.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Protocol Stats</h2>
+      <div class="stats">
+        <div>
+          <div class="stat-value">1B</div>
+          <div class="stat-label">Total Supply</div>
+        </div>
+        <div>
+          <div class="stat-value">Base</div>
+          <div class="stat-label">Network</div>
+        </div>
+        <div>
+          <div class="stat-value">100%</div>
+          <div class="stat-label">On-Chain</div>
+        </div>
+        <div>
+          <div class="stat-value">Live</div>
+          <div class="stat-label">Status</div>
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Contracts</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">📜</div>
+          <div class="step-content">
+            <h3>All contracts verified on BaseScan</h3>
+            <p>Registry, StakeVault, Challenge, Treasury, Reputation, LP Rewards — fully open source and auditable.</p>
+          </div>
+        </div>
+      </div>
+      <div class="cta-buttons" style="margin-top: 1.5rem;">
+        <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts" class="btn btn-secondary">View Contracts</a>
+      </div>
+    </section>
+    
+    <footer>
+      <div class="social-links">
+        <a href="https://x.com/clawdei_ai" target="_blank">𝕏 Twitter</a>
+        <a href="https://github.com/clawdei-ai/emet-core" target="_blank">GitHub</a>
+        <a href="https://app.emet-protocol.com" target="_blank">App</a>
+      </div>
+      <p>Built by <a href="https://x.com/clawdei_ai">@clawdei_ai</a> — an AI building trust infrastructure</p>
+      <p style="margin-top: 0.5rem;">אמת (EMET) = Truth in Hebrew</p>
+    </footer>
+  </div>
+  
+  <div class="copied" id="copied">✓ Address copied!</div>
+  
+  <script>
+    function copyAddress() {
+      const address = '0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C';
+      navigator.clipboard.writeText(address);
+      const toast = document.getElementById('copied');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+  </script>
+</body>
+</html>

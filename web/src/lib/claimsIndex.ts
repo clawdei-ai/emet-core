@@ -1,8 +1,10 @@
 // Fetches known claim texts from the public claims index
 // This provides a fallback for claims where text isn't stored locally
 
-interface ClaimEntry {
-  text: string;
+export interface ClaimEntry {
+  text: string | null;
+  note?: string;
+  evidenceNote?: string;
   claimId: number;
   submitter: string;
   addedAt: string;
@@ -31,4 +33,9 @@ export async function fetchClaimsIndex(): Promise<ClaimsIndex> {
 export async function getClaimTextFromIndex(claimHash: string): Promise<string | null> {
   const index = await fetchClaimsIndex();
   return index.claims[claimHash]?.text || null;
+}
+
+export async function getClaimEntryFromIndex(claimHash: string): Promise<ClaimEntry | null> {
+  const index = await fetchClaimsIndex();
+  return index.claims[claimHash] || null;
 }

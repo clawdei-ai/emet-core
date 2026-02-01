@@ -11,7 +11,7 @@ import { CONTRACTS } from '../contracts/addresses';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatEMET, shortenAddress, timeAgo, timeRemaining } from '../lib/format';
 import { getClaimText, saveClaim } from '../lib/claimStorage';
-import { getClaimTextFromIndex } from '../lib/claimsIndex';
+import { getClaimEntryFromIndex, ClaimEntry } from '../lib/claimsIndex';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +29,7 @@ export function ClaimDetail() {
   const [manualClaimText, setManualClaimText] = useState('');
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'valid' | 'invalid'>('none');
   const [indexedClaimText, setIndexedClaimText] = useState<string | null>(null);
+  const [indexedEntry, setIndexedEntry] = useState<ClaimEntry | null>(null);
 
   // Write hooks
   const stakeForHook = useStakeFor();
@@ -45,14 +46,17 @@ export function ClaimDetail() {
     if (approveHook.isSuccess) refetchAllowance();
   }, [approveHook.isSuccess, refetchAllowance]);
 
-  // Fetch claim text from public index if not stored locally
+  // Fetch claim entry from public index if not stored locally
   useEffect(() => {
     if (claim && !getClaimText((claim as { claimHash: string }).claimHash)) {
-      getClaimTextFromIndex((claim as { claimHash: string }).claimHash).then((text) => {
-        if (text) {
-          setIndexedClaimText(text);
-          // Cache locally for future visits
-          saveClaim((claim as { claimHash: string }).claimHash, text);
+      getClaimEntryFromIndex((claim as { claimHash: string }).claimHash).then((entry) => {
+        if (entry) {
+          setIndexedEntry(entry);
+          if (entry.text) {
+            setIndexedClaimText(entry.text);
+            // Cache locally for future visits
+            saveClaim((claim as { claimHash: string }).claimHash, entry.text);
+          }
         }
       });
     }
@@ -129,6 +133,14 @@ export function ClaimDetail() {
             <div className="claim-text-box">
               <span className="detail-label">Claim Statement {verificationStatus === 'valid' && '✓ Verified'}</span>
               <p className="claim-text">{claimText}</p>
+            </div>
+          ) : indexedEntry?.note ? (
+            <div className="claim-text-box claim-text-unrecoverable">
+              <span className="detail-label">Claim Statement</span>
+              <p className="claim-text-note"><em>⚠️ {indexedEntry.note}</em></p>
+              {indexedEntry.evidenceNote && (
+                <p className="claim-text-note" style={{ fontSize: '0.9em', opacity: 0.8 }}>{indexedEntry.evidenceNote}</p>
+              )}
             </div>
           ) : (
             <div className="claim-text-box claim-text-missing">
