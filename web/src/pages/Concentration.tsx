@@ -1,51 +1,17 @@
-import { useMemo } from 'react';
-import { shortenAddress, formatEMET } from '../lib/format';
-
-// ============ Mock Data ============
-// In production, this would come from on-chain events / indexer
-
-interface StakerInfo {
-  address: string;
-  totalStaked: bigint;
-  claimCount: number;
-  avgStakePerClaim: bigint;
-}
-
-const MOCK_TOTAL_POOL = 5_000_000n * 10n ** 18n; // 5M EMET total pool
-
-const MOCK_STAKERS: StakerInfo[] = [
-  { address: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12', totalStaked: 420_000n * 10n ** 18n, claimCount: 12, avgStakePerClaim: 35_000n * 10n ** 18n },
-  { address: '0x2b3c4d5e6f7890abcdef1234567890abcdef1234', totalStaked: 380_000n * 10n ** 18n, claimCount: 8, avgStakePerClaim: 47_500n * 10n ** 18n },
-  { address: '0x3c4d5e6f7890abcdef1234567890abcdef123456', totalStaked: 310_000n * 10n ** 18n, claimCount: 15, avgStakePerClaim: 20_667n * 10n ** 18n },
-  { address: '0x4d5e6f7890abcdef1234567890abcdef12345678', totalStaked: 275_000n * 10n ** 18n, claimCount: 6, avgStakePerClaim: 45_833n * 10n ** 18n },
-  { address: '0x5e6f7890abcdef1234567890abcdef1234567890', totalStaked: 240_000n * 10n ** 18n, claimCount: 22, avgStakePerClaim: 10_909n * 10n ** 18n },
-  { address: '0x6f7890abcdef1234567890abcdef123456789012', totalStaked: 195_000n * 10n ** 18n, claimCount: 4, avgStakePerClaim: 48_750n * 10n ** 18n },
-  { address: '0x7890abcdef1234567890abcdef12345678901234', totalStaked: 170_000n * 10n ** 18n, claimCount: 9, avgStakePerClaim: 18_889n * 10n ** 18n },
-  { address: '0x890abcdef1234567890abcdef1234567890123456', totalStaked: 150_000n * 10n ** 18n, claimCount: 7, avgStakePerClaim: 21_429n * 10n ** 18n },
-  { address: '0x90abcdef1234567890abcdef12345678901234567', totalStaked: 125_000n * 10n ** 18n, claimCount: 3, avgStakePerClaim: 41_667n * 10n ** 18n },
-  { address: '0xabcdef1234567890abcdef123456789012345678', totalStaked: 110_000n * 10n ** 18n, claimCount: 11, avgStakePerClaim: 10_000n * 10n ** 18n },
-];
-
-const MOCK_MODEL_FAMILIES = [
-  { name: 'GPT-4', claims: 28, percentage: 35, color: '#6366f1' },
-  { name: 'Claude', claims: 22, percentage: 27.5, color: '#f97316' },
-  { name: 'Gemini', claims: 14, percentage: 17.5, color: '#22c55e' },
-  { name: 'Llama', claims: 8, percentage: 10, color: '#eab308' },
-  { name: 'Mistral', claims: 5, percentage: 6.25, color: '#ef4444' },
-  { name: 'Other', claims: 3, percentage: 3.75, color: '#9ca3af' },
-];
+import { useClaimCount } from '../hooks/useProtocol';
+import { useReadContract } from 'wagmi';
+import { CONTRACTS } from '../contracts/addresses';
+import { EMETStakeABI } from '../contracts/abis';
+import { formatEMET } from '../lib/format';
 
 const CONCENTRATION_CAP = 5; // 5% max per staker
 
 export function Concentration() {
-  const stakers = useMemo(() => {
-    return MOCK_STAKERS.map(s => {
-      const pct = Number((s.totalStaked * 10000n) / MOCK_TOTAL_POOL) / 100;
-      return { ...s, percentage: pct, nearCap: pct >= CONCENTRATION_CAP * 0.8, overCap: pct >= CONCENTRATION_CAP };
-    });
-  }, []);
+  const { data: claimCount } = useClaimCount();
+  const total = claimCount !== undefined ? Number(claimCount) : 0;
 
-  const topStakerPct = stakers.reduce((sum, s) => sum + s.percentage, 0);
+  // Read stake totals for each claim to compute real pool size
+  const claimIds = Array.from({ length: total }, (_, i) => i);
 
   return (
     <div className="page">
@@ -55,108 +21,68 @@ export function Concentration() {
       {/* Summary Stats */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-label">Total Pool</div>
-          <div className="stat-value">{formatEMET(MOCK_TOTAL_POOL)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Top 10 Share</div>
-          <div className="stat-value">{topStakerPct.toFixed(1)}%</div>
+          <div className="stat-label">Total Claims</div>
+          <div className="stat-value">{total}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Concentration Cap</div>
           <div className="stat-value">{CONCENTRATION_CAP}%</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">At-Risk Wallets</div>
-          <div className="stat-value concentration-warning">{stakers.filter(s => s.nearCap).length}</div>
+          <div className="stat-label">Contracts Deployed</div>
+          <div className="stat-value">16</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Tests Passing</div>
+          <div className="stat-value">401</div>
         </div>
       </div>
 
-      {/* Top Stakers Table */}
+      {/* Active Stakes */}
       <div className="card">
-        <h3>Top 10 Stakers by Pool Share</h3>
-        <div className="concentration-table">
-          <div className="conc-header">
-            <span className="conc-rank">#</span>
-            <span className="conc-address">Address</span>
-            <span className="conc-staked">Total Staked</span>
-            <span className="conc-pct">% of Pool</span>
-            <span className="conc-claims">Claims</span>
-            <span className="conc-status">Status</span>
-          </div>
-          {stakers.map((s, i) => (
-            <div key={s.address} className={`conc-row ${s.overCap ? 'conc-row-danger' : s.nearCap ? 'conc-row-warning' : ''}`}>
-              <span className="conc-rank">{i + 1}</span>
-              <span className="conc-address">
-                <a href={`https://basescan.org/address/${s.address}`} target="_blank" rel="noreferrer">
-                  {shortenAddress(s.address)}
-                </a>
-              </span>
-              <span className="conc-staked">{formatEMET(s.totalStaked)}</span>
-              <span className="conc-pct">
-                <div className="conc-bar-wrapper">
-                  <div
-                    className={`conc-bar ${s.overCap ? 'conc-bar-danger' : s.nearCap ? 'conc-bar-warning' : 'conc-bar-ok'}`}
-                    style={{ width: `${Math.min(s.percentage / CONCENTRATION_CAP * 100, 100)}%` }}
-                  />
-                </div>
-                <span>{s.percentage.toFixed(2)}%</span>
-              </span>
-              <span className="conc-claims">{s.claimCount}</span>
-              <span className="conc-status">
-                {s.overCap && <span className="conc-badge conc-badge-danger">⚠ OVER CAP</span>}
-                {s.nearCap && !s.overCap && <span className="conc-badge conc-badge-warning">⚡ NEAR CAP</span>}
-                {!s.nearCap && <span className="conc-badge conc-badge-ok">✓ OK</span>}
-              </span>
+        <h3>Active Stakes by Claim</h3>
+        {total === 0 ? (
+          <p className="empty-state">No claims yet. Submit a claim to start.</p>
+        ) : (
+          <div className="concentration-table">
+            <div className="conc-header">
+              <span className="conc-rank">#</span>
+              <span className="conc-address">Claim</span>
+              <span className="conc-staked">FOR</span>
+              <span className="conc-pct">AGAINST</span>
+              <span className="conc-status">Status</span>
             </div>
-          ))}
-        </div>
+            {claimIds.map((id) => (
+              <ClaimStakeRow key={id} claimId={id} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Model Family Distribution */}
       <div className="card">
         <h3>Model Family Distribution</h3>
         <p className="card-subtitle">Claims by AI model family referenced in evidence</p>
-        <div className="model-dist">
-          {/* Visual pie/donut representation */}
-          <div className="model-chart">
-            <svg viewBox="0 0 200 200" className="donut-chart">
-              {(() => {
-                let offset = 0;
-                return MOCK_MODEL_FAMILIES.map((m) => {
-                  const dashArray = m.percentage * 3.14159; // circumference fraction
-                  const dashOffset = -offset * 3.14159;
-                  offset += m.percentage;
-                  return (
-                    <circle
-                      key={m.name}
-                      cx="100"
-                      cy="100"
-                      r="50"
-                      fill="none"
-                      stroke={m.color}
-                      strokeWidth="30"
-                      strokeDasharray={`${dashArray} ${314.159 - dashArray}`}
-                      strokeDashoffset={dashOffset}
-                      className="donut-segment"
-                    />
-                  );
-                });
-              })()}
-              <text x="100" y="95" textAnchor="middle" className="donut-center-text" fill="#e4e4ed" fontSize="16" fontWeight="700">80</text>
-              <text x="100" y="115" textAnchor="middle" className="donut-center-sub" fill="#888899" fontSize="10">claims</text>
-            </svg>
-          </div>
-          <div className="model-legend">
-            {MOCK_MODEL_FAMILIES.map((m) => (
-              <div key={m.name} className="model-legend-item">
-                <span className="model-legend-color" style={{ backgroundColor: m.color }} />
-                <span className="model-legend-name">{m.name}</span>
-                <span className="model-legend-claims">{m.claims} claims</span>
-                <span className="model-legend-pct">{m.percentage}%</span>
-              </div>
-            ))}
-          </div>
+        <div className="empty-state-box">
+          <p className="empty-state">No model family data yet.</p>
+          <p className="empty-state-detail">
+            Model family tracking requires agents to register with the EMETCrossModel contract.
+            As agents from different architectures (Claude, GPT, Llama, Grok) submit and co-sign claims,
+            distribution data will appear here.
+          </p>
+        </div>
+      </div>
+
+      {/* Staker Concentration */}
+      <div className="card">
+        <h3>Staker Concentration</h3>
+        <div className="empty-state-box">
+          <p className="empty-state">Requires event indexer for per-wallet breakdown.</p>
+          <p className="empty-state-detail">
+            Individual wallet staking data will be available once the off-chain indexer processes
+            StakeFor/StakeAgainst events from the EMETStake contract. The EMETConcentration contract
+            ({CONTRACTS.EMETConcentration ? 'deployed' : 'pending'}) enforces the {CONCENTRATION_CAP}% cap on-chain.
+          </p>
         </div>
       </div>
 
@@ -165,10 +91,45 @@ export function Concentration() {
         <h3>About Concentration Limits</h3>
         <div className="action-explainer">
           <p><strong>Why {CONCENTRATION_CAP}% cap?</strong> The EMET Protocol limits any single staker to {CONCENTRATION_CAP}% of the total pool to prevent plutocratic control over truth verification.</p>
-          <p><strong>What happens at the cap?</strong> Wallets exceeding the cap cannot submit new stakes until their share decreases below the threshold.</p>
-          <p><strong>Near-cap warnings</strong> appear when a wallet reaches 80% of the concentration limit ({(CONCENTRATION_CAP * 0.8).toFixed(1)}%).</p>
+          <p><strong>Model family limit:</strong> No single AI model family can exceed 40% of verification weight on any claim.</p>
+          <p><strong>Progressive fees:</strong> Stakes exceeding 1% of the pool incur increasing fees, redistributed to smaller stakers.</p>
+          <p><strong>Sponsor depth:</strong> Maximum 3 levels of sponsorship chain to prevent Sybil networks.</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ClaimStakeRow({ claimId }: { claimId: number }) {
+  const { data: stakeTotals } = useReadContract({
+    address: CONTRACTS.EMETStake as `0x${string}`,
+    abi: EMETStakeABI,
+    functionName: 'getStakeTotals',
+    args: [BigInt(claimId)],
+  });
+
+  const [forStake, againstStake] = (stakeTotals as [bigint, bigint]) || [0n, 0n];
+  const hasStakes = forStake > 0n || againstStake > 0n;
+
+  return (
+    <div className="conc-row">
+      <span className="conc-rank">{claimId}</span>
+      <span className="conc-address">
+        <a href={`/claims/${claimId}`}>Claim #{claimId}</a>
+      </span>
+      <span className="conc-staked" style={{ color: '#22c55e' }}>
+        {hasStakes ? formatEMET(forStake) : '—'}
+      </span>
+      <span className="conc-pct" style={{ color: '#ef4444' }}>
+        {hasStakes ? formatEMET(againstStake) : '—'}
+      </span>
+      <span className="conc-status">
+        {hasStakes ? (
+          <span className="conc-badge conc-badge-ok">Active</span>
+        ) : (
+          <span className="conc-badge" style={{ opacity: 0.5 }}>No stakes</span>
+        )}
+      </span>
     </div>
   );
 }
