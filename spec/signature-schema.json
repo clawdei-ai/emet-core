@@ -4,7 +4,14 @@
   "title": "EMET Signature Schema",
   "description": "Schema for cryptographic signatures on EMET claims, supporting multiple algorithms including post-quantum options",
   "type": "object",
-  "required": ["claimId", "signer", "algorithm", "publicKey", "signature", "timestamp"],
+  "required": [
+    "claimId",
+    "signer",
+    "algorithm",
+    "publicKey",
+    "signature",
+    "timestamp"
+  ],
   "properties": {
     "claimId": {
       "type": "string",
@@ -80,27 +87,85 @@
     },
     "signedFields": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "List of claim fields included in the signature (default: all fields except signature itself)",
-      "default": ["id", "type", "issuer", "subject", "content", "evidence", "confidence", "timestamp", "version"]
+      "default": [
+        "id",
+        "type",
+        "issuer",
+        "subject",
+        "content",
+        "evidence",
+        "confidence",
+        "timestamp",
+        "version"
+      ]
     },
     "canonicalization": {
       "type": "string",
-      "enum": ["jcs", "json-ld-urdna2015"],
+      "enum": [
+        "jcs",
+        "json-ld-urdna2015"
+      ],
       "default": "jcs",
       "description": "Canonicalization method used before hashing. JCS (RFC 8785) is default."
     },
     "hashAlgorithm": {
       "type": "string",
-      "enum": ["sha256", "sha384", "sha512", "sha3-256", "sha3-512", "blake3"],
+      "enum": [
+        "sha256",
+        "sha384",
+        "sha512",
+        "sha3-256",
+        "sha3-512",
+        "blake3"
+      ],
       "default": "sha256",
       "description": "Hash algorithm used to create the claim digest before signing"
+    },
+    "identityToken": {
+      "type": "object",
+      "description": "Optional Agent Identity Protocol (AIP) token for verified signer identity. See https://github.com/syn-ack-ai/agent-identity-protocol",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "agent-identity-v2"
+          ],
+          "description": "AIP protocol version"
+        },
+        "jwt": {
+          "type": "string",
+          "description": "ES256-signed JWT issued by the AIP issuer"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uri",
+          "description": "AIP issuer URI (e.g., https://syn-ack.ai)"
+        },
+        "verifyEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional custom verify endpoint URL"
+        }
+      },
+      "required": [
+        "protocol",
+        "jwt",
+        "issuer"
+      ]
     }
   },
   "allOf": [
     {
       "if": {
-        "properties": { "algorithm": { "const": "ed25519" } }
+        "properties": {
+          "algorithm": {
+            "const": "ed25519"
+          }
+        }
       },
       "then": {
         "properties": {
@@ -115,7 +180,11 @@
     },
     {
       "if": {
-        "properties": { "algorithm": { "pattern": "^dilithium" } }
+        "properties": {
+          "algorithm": {
+            "pattern": "^dilithium"
+          }
+        }
       },
       "then": {
         "properties": {
@@ -139,7 +208,17 @@
       "timestamp": "2024-01-15T10:35:00Z",
       "canonicalization": "jcs",
       "hashAlgorithm": "sha256",
-      "signedFields": ["id", "type", "issuer", "subject", "content", "evidence", "confidence", "timestamp", "version"]
+      "signedFields": [
+        "id",
+        "type",
+        "issuer",
+        "subject",
+        "content",
+        "evidence",
+        "confidence",
+        "timestamp",
+        "version"
+      ]
     },
     {
       "claimId": "emet:claim:660e8400-e29b-41d4-a716-446655440001",
