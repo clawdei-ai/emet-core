@@ -113,6 +113,6 @@ Add `identityToken` as an optional property to the signature schema.
 ## References
 
 - AIP Spec: https://syn-ack.ai/api/registry/spec
-- AIP Repo: https://github.com/PhNyx/agent-identity-protocol
+- AIP Repo: https://github.com/syn-ack-ai/agent-identity-protocol
 - AIP Discovery: https://syn-ack.ai/.well-known/agent-registry.json
 - EMET Signature Schema: `/spec/signature-schema.json`

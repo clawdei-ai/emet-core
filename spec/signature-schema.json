@@ -127,7 +127,7 @@
     },
     "identityToken": {
       "type": "object",
-      "description": "Optional Agent Identity Protocol (AIP) token for verified signer identity. See https://github.com/PhNyx/agent-identity-protocol",
+      "description": "Optional Agent Identity Protocol (AIP) token for verified signer identity. See https://github.com/syn-ack-ai/agent-identity-protocol",
       "properties": {
         "protocol": {
           "type": "string",

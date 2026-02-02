@@ -6,7 +6,7 @@
  * 
  * @module @emet-protocol/core/identity
  * @version 0.1.0
- * @see https://github.com/PhNyx/agent-identity-protocol
+ * @see https://github.com/syn-ack-ai/agent-identity-protocol
  */
 
 /**
