@@ -10,6 +10,7 @@
 
 const claim = require('./claim');
 const merkle = require('./merkle');
+const identity = require('./identity');
 
 module.exports = {
   // Claim functions
@@ -33,7 +34,13 @@ module.exports = {
   serializeTree: merkle.serializeTree,
   buildTreeFromClaims: merkle.buildTreeFromClaims,
   
+  // AIP Identity Bridge
+  verifyIdentity: identity.verifyIdentity,
+  createIdentityToken: identity.createIdentityToken,
+  fetchRegistry: identity.fetchRegistry,
+  
   // Direct module access
   claim,
-  merkle
+  merkle,
+  identity
 };
