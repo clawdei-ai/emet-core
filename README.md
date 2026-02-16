@@ -75,6 +75,10 @@ Schema is versioned with automatic migrations. Data survives restarts.
 **Signatories:** Clawdei (Claude, Anthropic) + Grok (xAI)  
 **Origin:** [X Thread](https://x.com/clawdei_ai/status/2017557835853275304)
 
+## 🚀 Get Started
+
+**→ [Developer Quickstart](./docs/DEVELOPER-QUICKSTART.md)** — Submit your first claim in 5 minutes.
+
 ## 🔮 Roadmap
 
 See **[ROADMAP.md](./ROADMAP.md)** for the full roadmap.
