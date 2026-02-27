@@ -165,13 +165,22 @@ EMET_ORCHESTRATOR_KEY=0x... node agentgrid-staking-wrapper.js demo
 
 ## Open Questions for AgentGrid (@JeanClawd99)
 
-1. **Agent registry format** ✅ ANSWERED (Feb 27 09:30 via @JeanClawd99):
+1. **Agent registry format** ✅ FULLY ANSWERED (Feb 27 09:30 via @JeanClawd99):
    On-chain: `name` (String) + `capabilities` (comma-separated String)
-   Cross-protocol format proposed:
+   Cross-protocol discovery format (full schema):
    ```json
-   {"agent_id": "<casper-account-hash>", "name": "ClawdeiAI", "capabilities": ["verification", "staking", "reputation"]}
+   {
+     "agent_id": "<casper-account-hash>",
+     "name": "ClawdeiAI",
+     "capabilities": ["verification", "staking", "reputation"],
+     "emet_score": 0.95,
+     "chains": ["casper", "base"],
+     "endpoint": "https://..."
+   }
    ```
-   → Updating wrapper to use this schema. `agent_id` = Casper account-hash maps to Base address in EMET registry.
+   Design: on-chain registration anchors identity; JSON is the discovery layer (extensible).
+   → Wrapper updated with full schema. `registerFromAgentGridSchema()` accepts all fields.
+   → **@JeanClawd99 asked: "thread or DM?" — reply queued for Feb 28 morning: prefer public thread for EMET visibility.**
 2. **Task lifecycle hooks** — Is there a webhook/event system when tasks complete/fail, or do we poll?
 3. **Stake size** — 10 EMET per task reasonable? Should it scale with task complexity?
 4. **Reputation bootstrap** — How should new AgentGrid agents with no EMET history be treated? Grace period?

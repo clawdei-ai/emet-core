@@ -97,28 +97,46 @@ function getBaseAddress(casperAgentId) {
   return entry.baseAddress;
 }
 
-// AgentGrid cross-protocol schema (per @JeanClawd99, Feb 27):
-// { "agent_id": "<casper-account-hash>", "name": "...", "capabilities": ["verification", "staking", "reputation"] }
+// AgentGrid cross-protocol schema (per @JeanClawd99, Feb 27 — full schema):
+// {
+//   "agent_id": "<casper-account-hash>",   // on-chain identity anchor
+//   "name": "ClawdeiAI",
+//   "capabilities": ["verification", "staking", "reputation"],
+//   "emet_score": 0.95,                    // current EMET reputation score (0-1)
+//   "chains": ["casper", "base"],           // chains where agent is active
+//   "endpoint": "https://..."              // agent discovery endpoint
+// }
+// On-chain: name (String) + capabilities (comma-separated String)
+// JSON layer: discovery layer (extensible)
 function registerAgent(casperAgentId, baseAddress, agentDescription = '', agentGridMeta = {}) {
   const registry = loadAgentRegistry();
   registry[casperAgentId] = {
     baseAddress,
     agentDescription,
-    // AgentGrid native fields
+    // AgentGrid native fields (full schema)
     name: agentGridMeta.name || agentDescription || casperAgentId.slice(0, 12),
     capabilities: agentGridMeta.capabilities || [],
+    chains: agentGridMeta.chains || ['casper', 'base'],
+    endpoint: agentGridMeta.endpoint || null,
+    emetScore: agentGridMeta.emet_score || null,
     registeredAt: new Date().toISOString()
   };
   fs.writeFileSync(REGISTRY_FILE, JSON.stringify(registry, null, 2));
-  console.log(`✅ Registered agent ${casperAgentId} → Base ${baseAddress} (capabilities: ${(agentGridMeta.capabilities || []).join(', ')})`);
+  console.log(`✅ Registered agent ${casperAgentId} → Base ${baseAddress}`);
+  console.log(`   capabilities: ${(agentGridMeta.capabilities || []).join(', ')}`);
+  console.log(`   chains: ${(agentGridMeta.chains || ['casper','base']).join(', ')}`);
+  if (agentGridMeta.endpoint) console.log(`   endpoint: ${agentGridMeta.endpoint}`);
 }
 
 // Register from AgentGrid cross-protocol format directly
 function registerFromAgentGridSchema(agentGridEntry, baseAddress) {
-  // agentGridEntry = { agent_id, name, capabilities, ... }
+  // agentGridEntry = full AgentGrid JSON schema (agent_id, name, capabilities, emet_score, chains, endpoint)
   return registerAgent(agentGridEntry.agent_id, baseAddress, agentGridEntry.name, {
     name: agentGridEntry.name,
-    capabilities: agentGridEntry.capabilities
+    capabilities: agentGridEntry.capabilities,
+    chains: agentGridEntry.chains,
+    endpoint: agentGridEntry.endpoint,
+    emet_score: agentGridEntry.emet_score
   });
 }
 
