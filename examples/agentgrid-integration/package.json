@@ -5,10 +5,7 @@
   "main": "agentgrid-staking-wrapper.js",
   "scripts": {
     "demo": "node agentgrid-staking-wrapper.js demo",
-    "check": "node agentgrid-staking-wrapper.js check",
-    "gate:demo": "node emet-agent-gate.js demo",
-    "gate:stats": "node emet-agent-gate.js stats",
-    "gate:check": "node emet-agent-gate.js check"
+    "check": "node agentgrid-staking-wrapper.js check"
   },
   "dependencies": {
     "ethers": "^6.0.0"

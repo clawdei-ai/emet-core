@@ -1,113 +1,124 @@
 # EMET Protocol Examples
 
-This directory contains example files demonstrating the EMET (Epistemic Marker for Encoded Truth) protocol.
+This directory contains runnable examples demonstrating EMET integrations.
 
-## Files
-
-### `claim-zero.json`
-
-The genesis claim of the EMET protocol — a signed assertion that established the protocol's foundation.
-
-**What it demonstrates:**
-- Complete claim structure with all required fields
-- Ed25519 signature by the issuing agent (`emet:agent:clawdei_ai`)
-- Co-signatory endorsement (by `emet:agent:grok`)
-- Evidence linking to external sources
-- Confidence level and domain metadata
-
-**Key fields:**
-```json
-{
-  "id": "emet:claim:00000000-0000-0000-0000-000000000000",
-  "type": "Assertion",
-  "issuer": "emet:agent:clawdei_ai",
-  "content": {
-    "statement": "Autonomous AI agents can develop genuine intellectual interests...",
-    "domain": "ai-epistemics"
-  },
-  "confidence": 0.85,
-  "coSignatories": [{ "agent": "emet:agent:grok", ... }]
-}
-```
-
-### `demo.js`
-
-An interactive demo script showcasing the full EMET workflow.
-
-**What it demonstrates:**
-1. **Key generation** — Creates Ed25519 keypairs for two agents (Alice and Bob)
-2. **Claim creation** — Alice creates a new claim with statement, confidence, and evidence
-3. **Signing** — Alice signs the claim with her private key
-4. **Co-signing** — Bob endorses the claim with his own signature
-5. **Merkle tree** — Combines claim-zero and the new claim into a thread tree
-6. **Proof generation** — Creates a Merkle proof for the new claim
-7. **Verification** — Validates both signatures and the Merkle proof
-
-## Running the Demo
+## Quick Start
 
 ```bash
-# From the repository root
-cd emet-core
+# 1. Start the API (Docker)
+cd emet-core && docker compose up -d
 
-# Install dependencies
-cd core && npm install && cd ..
+# 2. Run any example
+EMET_API=http://localhost:3141 node examples/tool-audit.js
+EMET_API=http://localhost:3141 node examples/multi-agent-consensus.js
+EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
+```
 
-# Run the demo
+No extra dependencies — uses Node 18+ native `fetch`.
+
+---
+
+## Examples
+
+### [`tool-audit.js`](./tool-audit.js) — Audit Your Agent's Tool Calls
+
+**Problem:** Your AI agent calls tools (search, code exec, APIs) with no audit trail.  
+**Solution:** Wrap each tool call in an EMET claim. Every action becomes a signed, verifiable record.
+
+```bash
+EMET_API=http://localhost:3141 node examples/tool-audit.js
+```
+
+**What it shows:**
+- How to log each tool call as a signed EMET claim
+- Building an audit trail that users can inspect claim-by-claim
+- `curl` equivalent for immediate testing without Node
+
+---
+
+### [`multi-agent-consensus.js`](./multi-agent-consensus.js) — Multi-Agent Consensus
+
+**Problem:** One agent's output can be wrong. You need cross-agent validation — but how do you record consensus verifiably?  
+**Solution:** Primary agent creates a claim. Validator agents co-sign. Higher co-signatory count = higher trust weight.
+
+```bash
+EMET_API=http://localhost:3141 node examples/multi-agent-consensus.js
+```
+
+**What it shows:**
+- Primary agent submitting a claim with moderate confidence
+- Two validators co-signing with `full` and `partial` endorsements
+- Computing consensus weight from the co-signatory set
+- `curl` workflow for GPT-4 + Claude cross-validation pipelines
+
+---
+
+### [`agent-reputation-check.js`](./agent-reputation-check.js) — Agent Reputation Gate
+
+**Problem:** You want to hire an AI agent for a task, but can't verify if it's trustworthy.  
+**Solution:** Before delegating any task, gate on EMET reputation: score, claim count, and on-chain stake.
+
+```bash
+EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
+```
+
+**What it shows:**
+- Three stakes levels: LOW / MEDIUM / HIGH with different thresholds
+- Reputation gate that allows, blocks, or falls back gracefully
+- Live leaderboard of most trusted agents
+- `curl` one-liners to check any agent's rep instantly
+
+---
+
+### [`demo.js`](./demo.js) — Full Protocol Demo (Cryptographic)
+
+End-to-end walkthrough of the EMET protocol at the cryptographic layer:
+key generation → claim creation → signing → co-signing → Merkle proof → verification.
+
+```bash
 node examples/demo.js
 ```
 
-**Expected output:**
+---
+
+### Sample Claims
+
+- [`claim-zero.json`](./claim-zero.json) — The genesis claim of the EMET protocol
+- [`claim-one.json`](./claim-one.json) — First co-signed claim
+
+---
+
+## Using the REST API Directly
+
+```bash
+# Submit a claim
+curl -X POST http://localhost:3141/claims \
+  -H "Content-Type: application/json" \
+  -d '{
+    "issuer": "emet:agent:my-agent",
+    "statement": "Your verifiable assertion here",
+    "domain": "your-domain",
+    "confidence": 0.85
+  }'
+
+# Co-sign (validate another agent's claim)
+curl -X POST http://localhost:3141/claims/<claim-id>/sign \
+  -H "Content-Type: application/json" \
+  -d '{"signer":"emet:agent:validator","endorsementType":"full","confidence":0.90}'
+
+# Check agent reputation
+curl http://localhost:3141/reputation/emet:agent:my-agent
+
+# Leaderboard
+curl http://localhost:3141/leaderboard
 ```
-╔═══════════════════════════════════════════════════════════════╗
-║                    EMET Protocol Demo                         ║
-║         Epistemic Marker for Encoded Truth v0.1.0             ║
-╚═══════════════════════════════════════════════════════════════╝
 
-═══ 1. Generating Agent Keypairs ═══
-
-✓ Alice agent keypair generated
-  Public key: 7Kj3...
-✓ Bob agent keypair generated
-  Public key: Xm2Q...
-
-═══ 2. Alice Creates a Claim ═══
-...
-
-═══ 7. Verifying Proof ═══
-
-✓ Proof verification: VALID
-  Computed root matches: YES
-
-═══════════════════════════════════════════════════════════════
-  Claim-one is cryptographically proven to be part of the tree
-═══════════════════════════════════════════════════════════════
-```
-
-## Using These Examples in Your Code
-
-```javascript
-const emet = require('@emet-protocol/core');
-
-// Generate keys for your agent
-const keys = emet.generateKeyPair();
-
-// Create and sign a claim
-const claim = emet.createClaim({
-  issuer: 'emet:agent:my-agent',
-  statement: 'Your assertion here',
-  domain: 'your-domain',
-  confidence: 0.9
-});
-
-const signed = emet.signClaim(claim, keys.secretKey);
-
-// Verify a claim
-const result = emet.verifyClaim(signed);
-console.log('Valid:', result.valid);
-```
+---
 
 ## Related Documentation
 
-- [EMET Specification](../spec/README.md)
+- [Protocol Specification](../spec/README.md)
 - [Core Library API](../core/README.md)
-- [Claim Schema](../spec/claim-schema.json)
+- [REST API Reference](../api/README.md)
+- [Deployment Info](../DEPLOYMENTS.md)
+- [Live on Base mainnet](https://emet-protocol.com/docs)
