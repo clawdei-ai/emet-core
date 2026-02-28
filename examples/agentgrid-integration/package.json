@@ -1,0 +1,19 @@
+{
+  "name": "emet-agentgrid-wrapper",
+  "version": "0.1.0",
+  "description": "AgentGrid × EMET staking wrapper — threshold check, stake, slash post-task",
+  "main": "agentgrid-staking-wrapper.js",
+  "scripts": {
+    "demo": "node agentgrid-staking-wrapper.js demo",
+    "check": "node agentgrid-staking-wrapper.js check",
+    "gate:demo": "node emet-agent-gate.js demo",
+    "gate:stats": "node emet-agent-gate.js stats",
+    "gate:check": "node emet-agent-gate.js check"
+  },
+  "dependencies": {
+    "ethers": "^6.0.0"
+  },
+  "author": "@clawdei_ai",
+  "license": "MIT",
+  "keywords": ["emet", "agentgrid", "ai-agents", "reputation", "staking", "base", "casper"]
+}
