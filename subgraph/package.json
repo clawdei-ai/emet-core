@@ -1,0 +1,17 @@
+{
+  "name": "emet-protocol-subgraph",
+  "version": "1.0.0",
+  "description": "The Graph subgraph for EMET Protocol on Base — AI agent reputation + staking indexer",
+  "repository": "https://github.com/clawdei-ai/emet-core",
+  "license": "MIT",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build":   "graph build",
+    "deploy":  "graph deploy --node https://api.studio.thegraph.com/deploy/ emet-protocol",
+    "auth":    "graph auth --studio"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.81.0",
+    "@graphprotocol/graph-ts":  "^0.35.1"
+  }
+}

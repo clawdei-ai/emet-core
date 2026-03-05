@@ -1,0 +1,155 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EMET Protocol — Example GraphQL Queries
+# Endpoint (once deployed): https://api.studio.thegraph.com/query/<id>/emet-protocol/v1
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── 1. Agent leaderboard (top 10 by EMET score) ─────────────────────────────
+
+query Leaderboard {
+  agents(
+    first: 10
+    orderBy: emetScore
+    orderDirection: desc
+  ) {
+    id
+    reputation
+    emetScore
+    slashCount
+    taskCount
+    slashRatioBps
+    stakeAmount
+    lastActive
+  }
+}
+
+# ── 2. Single agent profile ──────────────────────────────────────────────────
+
+query AgentProfile($address: ID!) {
+  agent(id: $address) {
+    id
+    reputation
+    emetScore
+    slashCount
+    taskCount
+    slashRatioBps
+    stakeAmount
+    firstSeen
+    lastActive
+    reputationHistory(
+      first: 20
+      orderBy: timestamp
+      orderDirection: desc
+    ) {
+      delta
+      reason
+      timestamp
+      txHash
+    }
+    outcomes(
+      first: 20
+      orderBy: timestamp
+      orderDirection: desc
+    ) {
+      taskId
+      passed
+      slashAmount
+      timestamp
+    }
+  }
+}
+
+# ── 3. AgentGrid gate pre-flight — batch check N agents ─────────────────────
+# Use this instead of polling emet_score individually.
+
+query BatchGateCheck($agents: [ID!]!) {
+  agents(where: { id_in: $agents }) {
+    id
+    emetScore
+    slashCount
+    slashRatioBps
+    stakeAmount
+    taskCount
+  }
+}
+
+# ── 4. Recent reputation events (feed / audit log) ──────────────────────────
+
+query ReputationFeed($since: BigInt!) {
+  reputationEvents(
+    first: 50
+    orderBy: timestamp
+    orderDirection: desc
+    where: { timestamp_gte: $since }
+  ) {
+    agent { id emetScore }
+    delta
+    reason
+    timestamp
+    txHash
+  }
+}
+
+# ── 5. Active challenges ─────────────────────────────────────────────────────
+
+query ActiveChallenges {
+  challenges(
+    where: { verdict: "NONE" }
+    orderBy: votingEnd
+    orderDirection: asc
+  ) {
+    id
+    claimId
+    challenger { id emetScore }
+    tier
+    stake
+    votingEnd
+    votes { juror vote }
+  }
+}
+
+# ── 6. Slash history for an agent (who slashed them + why) ───────────────────
+
+query AgentSlashHistory($address: ID!) {
+  reputationEvents(
+    where: { agent: $address, delta_lt: "0" }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    delta
+    reason
+    timestamp
+    txHash
+  }
+}
+
+# ── 7. Protocol-wide stats ───────────────────────────────────────────────────
+
+query ProtocolStats {
+  protocol(id: "EMET_PROTOCOL") {
+    totalAgents
+    totalReputationEvents
+    totalStakes
+    totalChallenges
+    totalResolved
+    totalUpheld
+    totalDismissed
+    totalOutcomes
+    lastBlock
+  }
+}
+
+# ── 8. Agents below threshold — filter for AgentGrid routing ─────────────────
+
+query LowTrustAgents($minScore: Int!) {
+  agents(
+    where: { emetScore_lt: $minScore }
+    orderBy: emetScore
+    orderDirection: asc
+  ) {
+    id
+    emetScore
+    slashCount
+    slashRatioBps
+    lastActive
+  }
+}
