@@ -350,6 +350,7 @@ class EmetAgentGate {
    */
   async logOutcome({ casperAgentId, taskId, claimId, success, summary, taskMeta = {} }) {
     const timestamp = new Date().toISOString();
+    const unixTimestamp = Math.floor(Date.now() / 1000);
 
     if (success) {
       console.log(`📋 [logOutcome] Task ${taskId} SUCCESS — submitting positive claim...`);
@@ -359,6 +360,19 @@ class EmetAgentGate {
         claimId,
         summary || `AgentGrid task ${taskId} completed successfully`,
       );
+
+      // Emit OutcomeLogged event (mirrors on-chain event for indexers)
+      // On-chain: event OutcomeLogged(address indexed agent, bytes32 indexed taskId, bool passed, uint256 slashAmount, uint256 timestamp)
+      const outcomeEvent = {
+        event: 'OutcomeLogged',
+        agent: result?.baseAddress || casperAgentId,
+        taskId,
+        passed: true,
+        slashAmount: 0n,
+        timestamp: unixTimestamp,
+      };
+      console.log(`📡 [OutcomeLogged] ${JSON.stringify(outcomeEvent)}`);
+
       console.log(`✅ [logOutcome] Outcome logged. Agent rep increases on Base.`);
       return {
         action: 'success',
@@ -366,6 +380,7 @@ class EmetAgentGate {
         taskId,
         casperAgentId,
         timestamp,
+        outcomeEvent,
         ...result,
       };
     } else {
@@ -386,6 +401,22 @@ class EmetAgentGate {
         claimId,
         challengeEvidence,
       );
+
+      // Emit OutcomeLogged event for indexers.
+      // slashAmount reflects the stake forfeited on a successful slash challenge.
+      // In this off-chain layer, use result.slashAmount if populated; downstream
+      // the on-chain EMETReputation.logOutcome() will emit the authoritative value.
+      const slashAmount = BigInt(result?.slashAmount ?? 0);
+      const outcomeEvent = {
+        event: 'OutcomeLogged',
+        agent: result?.baseAddress || casperAgentId,
+        taskId,
+        passed: false,
+        slashAmount,
+        timestamp: unixTimestamp,
+      };
+      console.log(`📡 [OutcomeLogged] ${JSON.stringify(outcomeEvent, (_, v) => typeof v === 'bigint' ? v.toString() : v)}`);
+
       console.log(`🔥 [logOutcome] Challenge submitted. EMET jury will resolve.`);
       return {
         action: 'slash_challenge',
@@ -393,6 +424,7 @@ class EmetAgentGate {
         taskId,
         casperAgentId,
         timestamp,
+        outcomeEvent,
         ...result,
       };
     }

@@ -29,6 +29,39 @@ struct AgentStats {
     uint256 last_active;    // Unix timestamp of most recent claim submission
 }
 
+// ─── Events (for indexers / subgraph / real-time leaderboards) ───────────────
+
+/**
+ * @dev Emitted by logOutcome() after each task resolves.
+ *      Downstream indexers (The Graph, Envio, Goldsky) catch this to:
+ *      - build real-time leaderboards without polling contract state
+ *      - compute running slash_ratio per agent
+ *      - stream task history for AgentGrid task explorer
+ *
+ * @param agent       Agent's Base address
+ * @param taskId      External task ID (AgentGrid's bytes32 task identifier)
+ * @param passed      true = success (rep+1), false = failure (slash triggered)
+ * @param slashAmount EMET tokens slashed if passed=false, 0 if passed=true
+ * @param timestamp   Block timestamp of outcome resolution
+ *
+ * Suggested subgraph entity (schema.graphql):
+ *   type OutcomeLog @entity {
+ *     id: ID!                  # taskId
+ *     agent: Bytes!            # agent address
+ *     passed: Boolean!
+ *     slashAmount: BigInt!
+ *     timestamp: BigInt!
+ *     blockNumber: BigInt!
+ *   }
+ */
+event OutcomeLogged(
+    address indexed agent,
+    bytes32 indexed taskId,
+    bool    passed,
+    uint256 slashAmount,
+    uint256 timestamp
+);
+
 // ─── Extended EMETReputation Interface ────────────────────────────────────────
 
 interface IEMETReputationV2 {
@@ -40,6 +73,14 @@ interface IEMETReputationV2 {
 
     // Proposed: batch read for AgentGrid task routing (check N agents at once)
     function getAgentStatsBatch(address[] calldata agents) external view returns (AgentStats[] memory);
+
+    // Proposed: log task outcome + emit OutcomeLogged for indexers
+    function logOutcome(
+        address agent,
+        bytes32 taskId,
+        bool    passed,
+        uint256 slashAmount
+    ) external;
 }
 
 // ─── Proposed Gate Library ────────────────────────────────────────────────────
