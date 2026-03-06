@@ -1,5 +1,5 @@
 import { BigInt, Bytes } from "@graphprotocol/graph-ts";
-import { Agent, Protocol } from "../../generated/schema";
+import { Agent, Protocol } from "../generated/schema";
 
 // ── Agent helpers ────────────────────────────────────────────────────────────
 

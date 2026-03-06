@@ -1,6 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
-import { Staked, Withdrawn } from "../../generated/EMETStake/EMETStake";
-import { Stake } from "../../generated/schema";
+import { Staked, Withdrawn } from "../generated/EMETStake/EMETStake";
+import { Stake } from "../generated/schema";
 import { loadOrCreateAgent, loadOrCreateProtocol } from "./helpers";
 
 /**

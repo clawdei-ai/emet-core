@@ -1,0 +1,121 @@
+[
+  {
+    "type": "event",
+    "name": "ChallengeCreated",
+    "inputs": [
+      {
+        "name": "challengeId",
+        "type": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "claimId",
+        "type": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "challenger",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "evidence",
+        "type": "string",
+        "indexed": false
+      },
+      {
+        "name": "stake",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "tier",
+        "type": "uint8",
+        "indexed": false
+      },
+      {
+        "name": "votingEnd",
+        "type": "uint256",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "VoteCast",
+    "inputs": [
+      {
+        "name": "challengeId",
+        "type": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "juror",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "vote",
+        "type": "uint8",
+        "indexed": false
+      },
+      {
+        "name": "reasoning",
+        "type": "string",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "ChallengeResolved",
+    "inputs": [
+      {
+        "name": "challengeId",
+        "type": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "verdict",
+        "type": "uint8",
+        "indexed": true
+      },
+      {
+        "name": "winner",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "winnerPayout",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "jurorPayout",
+        "type": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "protocolFee",
+        "type": "uint256",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "ChallengeAppealed",
+    "inputs": [
+      {
+        "name": "challengeId",
+        "type": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "appellant",
+        "type": "address",
+        "indexed": true
+      }
+    ]
+  }
+]

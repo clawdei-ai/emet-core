@@ -4,8 +4,8 @@ import {
   VoteCast,
   ChallengeResolved,
   ChallengeAppealed,
-} from "../../generated/EMETChallengeV3/EMETChallengeV3";
-import { Challenge, Vote } from "../../generated/schema";
+} from "../generated/EMETChallengeV3/EMETChallengeV3";
+import { Challenge, Vote } from "../generated/schema";
 import { loadOrCreateAgent, loadOrCreateProtocol, computeEmetScore } from "./helpers";
 
 // Tier enum values from contract (0=STANDARD, 1=EXPEDITED, 2=CRITICAL)

@@ -1,6 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
-import { ReputationUpdated } from "../../generated/EMETReputation/EMETReputation";
-import { ReputationEvent } from "../../generated/schema";
+import { ReputationUpdated } from "../generated/EMETReputation/EMETReputation";
+import { ReputationEvent } from "../generated/schema";
 import { loadOrCreateAgent, loadOrCreateProtocol, computeEmetScore } from "./helpers";
 
 /**
