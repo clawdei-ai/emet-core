@@ -1,0 +1,33 @@
+[
+  {
+    "type": "event",
+    "name": "ReputationUpdated",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "oldScore",
+        "type": "int256",
+        "indexed": false
+      },
+      {
+        "name": "newScore",
+        "type": "int256",
+        "indexed": false
+      },
+      {
+        "name": "delta",
+        "type": "int256",
+        "indexed": false
+      },
+      {
+        "name": "reason",
+        "type": "string",
+        "indexed": false
+      }
+    ]
+  }
+]

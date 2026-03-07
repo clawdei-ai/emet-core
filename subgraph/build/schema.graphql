@@ -1,0 +1,259 @@
+"""
+EMET Protocol — The Graph Subgraph Schema
+Co-designed with @JeanClawd99 (AgentGrid/Casper) | emet-protocol.com
+
+Entities:
+  Agent          — per-agent reputation snapshot (updated on every event)
+  ReputationEvent — fine-grained audit trail of every reputation change
+  Stake          — per-claim stake records
+  Challenge      — challenge lifecycle (created → votes → resolved)
+  Vote           — individual juror votes
+  OutcomeLogged  — off-chain task outcomes (AgentGrid gate integration)
+  Protocol       — global counters / totals
+"""
+
+# ─── Agent ───────────────────────────────────────────────────────────────────
+
+type Agent @entity {
+  " Base address "
+  id: ID!
+
+  " Current reputation score (int256 cumulative) "
+  reputation: BigInt!
+
+  " Number of upheld challenges (slashes) "
+  slashCount: Int!
+
+  " Total tasks completed (from OutcomeLogged events) "
+  taskCount: Int!
+
+  " Current EMET tokens staked "
+  stakeAmount: BigInt!
+
+  " Slash ratio × 10000 (basis points) — recomputed on every task/slash "
+  slashRatioBps: Int!
+
+  " EMET score (0–100, mirrors emet-agent-gate.js scoring logic) "
+  emetScore: Int!
+
+  " Unix timestamp of first activity "
+  firstSeen: BigInt!
+
+  " Unix timestamp of most recent event "
+  lastActive: BigInt!
+
+  " All reputation change events "
+  reputationHistory: [ReputationEvent!]! @derivedFrom(field: "agent")
+
+  " All stakes placed (for or against claims) "
+  stakes: [Stake!]! @derivedFrom(field: "staker")
+
+  " All challenges initiated by this agent "
+  challengesInitiated: [Challenge!]! @derivedFrom(field: "challenger")
+
+  " All task outcomes logged "
+  outcomes: [OutcomeLogged!]! @derivedFrom(field: "agent")
+}
+
+# ─── ReputationEvent ─────────────────────────────────────────────────────────
+
+type ReputationEvent @entity {
+  " tx hash + log index "
+  id: ID!
+
+  " Agent whose reputation changed "
+  agent: Agent!
+
+  " Score before this change "
+  oldScore: BigInt!
+
+  " Score after this change "
+  newScore: BigInt!
+
+  " Delta (newScore - oldScore) "
+  delta: BigInt!
+
+  " Human-readable reason from contract "
+  reason: String!
+
+  " Block timestamp "
+  timestamp: BigInt!
+
+  " Block number "
+  blockNumber: BigInt!
+
+  " Transaction hash "
+  txHash: Bytes!
+}
+
+# ─── Stake ───────────────────────────────────────────────────────────────────
+
+type Stake @entity {
+  " tx hash + log index "
+  id: ID!
+
+  " Claim being staked on "
+  claimId: BigInt!
+
+  " Address that placed the stake "
+  staker: Agent!
+
+  " Amount of EMET staked (wei) "
+  amount: BigInt!
+
+  " true = staking FOR the claim, false = staking AGAINST "
+  isFor: Boolean!
+
+  " Withdrawn? (false until Withdrawn event) "
+  withdrawn: Boolean!
+
+  " Block timestamp "
+  timestamp: BigInt!
+
+  " Transaction hash "
+  txHash: Bytes!
+}
+
+# ─── Challenge ───────────────────────────────────────────────────────────────
+
+enum Tier { STANDARD EXPEDITED CRITICAL }
+enum Verdict { NONE UPHELD DISMISSED }
+
+type Challenge @entity {
+  " Challenge ID from contract "
+  id: ID!
+
+  " Linked claim ID "
+  claimId: BigInt!
+
+  " Agent who initiated the challenge "
+  challenger: Agent!
+
+  " Evidence string submitted on-chain "
+  evidence: String!
+
+  " Stake placed by challenger "
+  stake: BigInt!
+
+  " Challenge tier "
+  tier: Tier!
+
+  " Voting deadline (unix timestamp) "
+  votingEnd: BigInt!
+
+  " Resolved verdict (NONE until resolution) "
+  verdict: Verdict!
+
+  " Winner address (null until resolution) "
+  winner: Bytes
+
+  " Winner payout (null until resolution) "
+  winnerPayout: BigInt
+
+  " Juror payout total (null until resolution) "
+  jurorPayout: BigInt
+
+  " Block timestamp of creation "
+  createdAt: BigInt!
+
+  " Block timestamp of resolution (null until resolved) "
+  resolvedAt: BigInt
+
+  " All votes cast in this challenge "
+  votes: [Vote!]! @derivedFrom(field: "challenge")
+}
+
+# ─── Vote ─────────────────────────────────────────────────────────────────────
+
+enum VoteChoice { UPHOLD DISMISS ABSTAIN }
+
+type Vote @entity {
+  " tx hash + log index "
+  id: ID!
+
+  " The challenge this vote belongs to "
+  challenge: Challenge!
+
+  " Juror address "
+  juror: Bytes!
+
+  " Vote choice "
+  vote: VoteChoice!
+
+  " Reasoning string (stored on-chain) "
+  reasoning: String!
+
+  " Block timestamp "
+  timestamp: BigInt!
+
+  " Transaction hash "
+  txHash: Bytes!
+}
+
+# ─── OutcomeLogged ───────────────────────────────────────────────────────────
+
+"""
+Off-chain task outcomes emitted by emet-agent-gate.js and relayed to the
+subgraph via The Graph's Firehose or the EMET outcomes API webhook.
+
+Schema matches emet-agent-stats-interface.sol OutcomeLogged event suggestion.
+"""
+type OutcomeLogged @entity {
+  " taskId (globally unique, from AgentGrid) "
+  id: ID!
+
+  " Agent that executed the task "
+  agent: Agent!
+
+  " Task identifier from AgentGrid "
+  taskId: String!
+
+  " true = success, false = slash "
+  passed: Boolean!
+
+  " Amount slashed (0 if passed) in wei "
+  slashAmount: BigInt!
+
+  " Unix timestamp (from gate.js, not block time) "
+  timestamp: BigInt!
+
+  " Source identifier (e.g. 'agentgrid', 'custom') "
+  source: String
+}
+
+# ─── Protocol ────────────────────────────────────────────────────────────────
+
+"""
+Global protocol aggregates. Single entity, id = 'EMET_PROTOCOL'.
+"""
+type Protocol @entity {
+  " Singleton key "
+  id: ID!
+
+  " Total registered agents "
+  totalAgents: Int!
+
+  " Total reputation events processed "
+  totalReputationEvents: Int!
+
+  " Total stakes placed "
+  totalStakes: Int!
+
+  " Total challenges initiated "
+  totalChallenges: Int!
+
+  " Total challenges resolved "
+  totalResolved: Int!
+
+  " Total upheld challenges (slashes) "
+  totalUpheld: Int!
+
+  " Total dismissed challenges "
+  totalDismissed: Int!
+
+  " Total task outcomes logged "
+  totalOutcomes: Int!
+
+  " Last updated block "
+  lastBlock: BigInt!
+}
