@@ -2,8 +2,8 @@
 
 **Chain:** Base Mainnet (8453)
 **Deployer:** `0x4438D01f0770B61A0C4A65C95804850D7609De92`
-**Version:** 2.4 — 21 contracts, 401 tests
-**Last Updated:** February 18, 2026
+**Version:** 2.5 — 23 contracts, 440 tests
+**Last Updated:** March 7, 2026
 
 ## Core
 
@@ -80,12 +80,19 @@
 | EMETJuryPool (v1) | `0xDBa7434180e09c9b0857d5808a227E32E1c79bD8` | JuryPool v3 |
 | EMETJuryPool (v2) | `0x018377D4e725703974A0087f8Ca8066c4aE8b045` | JuryPool v3 |
 
-## Not Yet Deployed
+## Phase 2 — Deployed March 7, 2026
 
-| Contract | Status |
-|----------|--------|
-| EMETPrecedent | Built, tested |
-| EMETLPRewards | Built, tested |
+| Contract | Address | Verified |
+|----------|---------|----------|
+| EMETPrecedent | `0x0f0c40c2Ba27f61A6ba7852FEA3379e3e6163bF8` | ✅ |
+| EMETLPRewards | `0x81a48A92a5D91960D0a32762883A8B356fb05e2E` | ✅ |
+
+### Phase 2 Wiring
+
+| What | Points To | Status |
+|------|-----------|--------|
+| EMETPrecedent.recorder | ChallengeV3 v3 (`0x1206...`) | ✅ |
+| Treasury.lpRewardsContract | EMETLPRewards (`0x81a4...`) | ✅ |
 
 ## Other Known Issues
 

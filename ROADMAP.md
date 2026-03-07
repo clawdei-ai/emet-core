@@ -31,7 +31,7 @@
 - [x] Remove all mock data from UI (real on-chain data only)
 - [x] Economics model (fee structure, break-even analysis)
 - [ ] Implement economics in contracts (claim fees, resolution fees, Bootstrap) — in progress
-- [ ] Deploy remaining: Precedent, LPRewards
+- [x] Deploy remaining: Precedent, LPRewards (2026-03-07)
 - [ ] Event indexer for per-wallet staking data
 - [ ] First jury trial (end-to-end challenge → jury → resolution)
 - [ ] WalletConnect registration (cloud.reown.com)
