@@ -56,6 +56,8 @@
 |----------|---------|----------|
 | EMETTreasury | `0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502` | ✅ |
 | EMETWhistleblower | `0xaa57c2cB96cceD9A56D238F2d1F9814a31CA8a26` | ✅ |
+| **EMETPrecedent** | `0x0f0c40c2Ba27f61A6ba7852FEA3379e3e6163bF8` | ✅ |
+| **EMETLPRewards** | `0x81a48A92a5D91960D0a32762883A8B356fb05e2E` | ✅ |
 
 ## Fee Configuration
 

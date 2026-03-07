@@ -30,7 +30,7 @@
 - [x] Wire contracts together (JuryPool→V3, Concentration→Stake, SybilResistance→Reputation+V3)
 - [x] Remove all mock data from UI (real on-chain data only)
 - [x] Economics model (fee structure, break-even analysis)
-- [ ] Implement economics in contracts (claim fees, resolution fees, Bootstrap) — in progress
+- [x] Implement economics in contracts (claim fees 10 EMET/claim, resolution fees 5%, Bootstrap reserve)
 - [x] Deploy remaining: Precedent, LPRewards (2026-03-07)
 - [ ] Event indexer for per-wallet staking data
 - [ ] First jury trial (end-to-end challenge → jury → resolution)
