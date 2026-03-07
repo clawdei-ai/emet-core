@@ -1,8 +1,8 @@
 {
   "chain": "base",
   "chainId": 8453,
-  "timestamp": "2026-02-18T13:30:00Z",
-  "version": "2.4",
+  "timestamp": "2026-03-07T09:30:00Z",
+  "version": "2.5",
   "deployer": "0x4438D01f0770B61A0C4A65C95804850D7609De92",
   "contracts": {
     "core": {
@@ -39,20 +39,26 @@
       "EMETChallengeV3_v2": "0x697BAC4b1FCA88e12003C0ef3E03bdcbdE5d17D9",
       "EMETJuryPool_v1": "0xDBa7434180e09c9b0857d5808a227E32E1c79bD8",
       "EMETJuryPool_v2": "0x018377D4e725703974A0087f8Ca8066c4aE8b045"
+    },
+    "phase2": {
+      "EMETPrecedent": "0x0f0c40c2Ba27f61A6ba7852FEA3379e3e6163bF8",
+      "EMETLPRewards": "0x81a48A92a5D91960D0a32762883A8B356fb05e2E"
     }
   },
   "wiring": {
-    "Registry_v3.challengeContract": "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC (ChallengeV3 v3) ✓",
-    "JuryPool_v3.challengeContract": "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC (ChallengeV3 v3) ✓",
-    "ChallengeV3_v3.registry": "0x7a03057490e8541BF4A0F879659e58Fb13f03Ca9 (Registry v3) ✓",
-    "ChallengeV3_v3.treasury": "0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502 (Treasury) ✓",
-    "ChallengeV3_v3.reputation": "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e (Reputation) ✓",
-    "ChallengeV3_v3.juryPool": "0xcba6b6b903017Be251036CD71E231a70761009da (JuryPool v3) ✓",
+    "Registry_v3.challengeContract": "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC (ChallengeV3 v3) \u2713",
+    "JuryPool_v3.challengeContract": "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC (ChallengeV3 v3) \u2713",
+    "ChallengeV3_v3.registry": "0x7a03057490e8541BF4A0F879659e58Fb13f03Ca9 (Registry v3) \u2713",
+    "ChallengeV3_v3.treasury": "0xe1230E68818CCE66275Ad95E1bC79517Ac1ae502 (Treasury) \u2713",
+    "ChallengeV3_v3.reputation": "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e (Reputation) \u2713",
+    "ChallengeV3_v3.juryPool": "0xcba6b6b903017Be251036CD71E231a70761009da (JuryPool v3) \u2713",
     "Concentration.updater": "0xb4A3Cf08194E445db65862Fb92bbC0cE587345bb",
     "SybilResistance.authorizedCallers": [
       "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e",
       "0xfFd54b3B1D72BE8205D961566e1AD4134FBd5332"
-    ]
+    ],
+    "EMETPrecedent.recorder": "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC (ChallengeV3 v3) \u2713",
+    "Treasury.lpRewardsContract": "0x81a48A92a5D91960D0a32762883A8B356fb05e2E (EMETLPRewards) \u2713"
   },
   "knownIssues": {
     "GOVERNANCE_FIXED": "Governance trio v3 deployed with correct circular wiring. Registry v3 <-> ChallengeV3 v3 <-> JuryPool v3 all properly linked.",
@@ -65,8 +71,8 @@
     "Registry.claimFee": "10 EMET (DEFAULT_CLAIM_FEE, set in constructor)",
     "ChallengeV3.resolutionFeeBps": "500 (5%, DEFAULT_RESOLUTION_FEE_BPS)"
   },
-  "notDeployed": ["EMETPrecedent", "EMETLPRewards"],
+  "notDeployed": [],
   "uniswapPool": "0x0C7f51B0dB3e319736c979EBD38687cff521086A",
-  "testCount": 401,
-  "contractCount": 21
+  "testCount": 440,
+  "contractCount": 23
 }
