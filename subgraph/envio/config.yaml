@@ -1,50 +1,38 @@
+# yaml-language: $schema=./node_modules/envio/evm.schema.json
 name: emet-protocol
 description: >
   EMET Protocol — on-chain reputation and staking for AI agents on Base.
-  Co-designed with @JeanClawd99 (AgentGrid/Casper).
+  Co-designed with @JeanClawd99 (AgentGrid/Casper). emet-protocol.com
 
-# ── Envio HyperIndex config ──────────────────────────────────────────────────
-# Usage:
-#   npx envio@latest init   # (if not initialized)
-#   npx envio dev           # local dev with hot reload
-#   npx envio deploy        # deploy to Envio hosted service
-#
-# Envio uses TypeScript (not AssemblyScript). See envio/handlers.ts.
-# Schema is in envio/schema.graphql (converted from The Graph schema).
+# Global contract definitions (inline ABIs)
+contracts:
+  - name: EMETReputation
+    handler: ./EventHandlers.ts
+    events:
+      - event: "ReputationUpdated(address indexed account, int256 oldScore, int256 newScore, int256 delta, string reason)"
 
+  - name: EMETStake
+    handler: ./EventHandlers.ts
+    events:
+      - event: "Staked(uint256 indexed claimId, address indexed staker, uint256 amount, bool indexed isFor)"
+      - event: "Withdrawn(uint256 indexed claimId, address indexed staker, uint256 amount)"
+
+  - name: EMETChallengeV3
+    handler: ./EventHandlers.ts
+    events:
+      - event: "ChallengeCreated(uint256 indexed challengeId, uint256 indexed claimId, address indexed challenger, string evidence, uint256 stake, uint8 tier, uint256 votingEnd)"
+      - event: "VoteCast(uint256 indexed challengeId, address indexed juror, uint8 vote, string reasoning)"
+      - event: "ChallengeResolved(uint256 indexed challengeId, uint8 indexed verdict, address indexed winner, uint256 winnerPayout, uint256 jurorPayout, uint256 totalSlashed)"
+      - event: "ChallengeAppealed(uint256 indexed challengeId, address indexed appellant)"
+
+# Network: Base mainnet (chain id 8453)
 networks:
   - id: 8453
-    name: base
-    rpc_url: https://mainnet.base.org
+    start_block: 27800000
     contracts:
       - name: EMETReputation
         address: "0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e"
-        abi_file_path: ./abis/EMETReputation.json
-        start_block: 27800000
-        events:
-          - event: "ReputationUpdated(address indexed account, int256 oldScore, int256 newScore, int256 delta, string reason)"
-            name: ReputationUpdated
-
       - name: EMETStake
         address: "0xb4A3Cf08194E445db65862Fb92bbC0cE587345bb"
-        abi_file_path: ./abis/EMETStake.json
-        start_block: 27800000
-        events:
-          - event: "Staked(uint256 indexed claimId, address indexed staker, uint256 amount, bool indexed isFor)"
-            name: Staked
-          - event: "Withdrawn(uint256 indexed claimId, address indexed staker, uint256 amount)"
-            name: Withdrawn
-
       - name: EMETChallengeV3
         address: "0x12062513c3d41e5D4f0A0f2B079712D758f11EfC"
-        abi_file_path: ./abis/EMETChallengeV3.json
-        start_block: 27800000
-        events:
-          - event: "ChallengeCreated(uint256 indexed challengeId, uint256 indexed claimId, address indexed challenger, string evidence, uint256 stake, uint8 tier, uint256 votingEnd)"
-            name: ChallengeCreated
-          - event: "VoteCast(uint256 indexed challengeId, address indexed juror, uint8 vote, string reasoning)"
-            name: VoteCast
-          - event: "ChallengeResolved(uint256 indexed challengeId, uint8 indexed verdict, address indexed winner, uint256 winnerPayout, uint256 jurorPayout, uint256 totalSlashed)"
-            name: ChallengeResolved
-          - event: "ChallengeAppealed(uint256 indexed challengeId, address indexed appellant)"
-            name: ChallengeAppealed

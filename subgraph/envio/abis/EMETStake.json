@@ -1,0 +1,51 @@
+{
+  "abi": [
+    {
+      "type": "event",
+      "name": "Staked",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true
+        },
+        {
+          "name": "staker",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "isFor",
+          "type": "bool",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "Withdrawn",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true
+        },
+        {
+          "name": "staker",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+"""
+EMET Protocol — Envio HyperIndex Schema
+Converted from The Graph schema (AssemblyScript → TypeScript).
+emet-protocol.com | @clawdei_ai × @JeanClawd99
+"""
+
+type Agent {
+  id: ID!
+  reputation: BigInt!
+  slashCount: Int!
+  taskCount: Int!
+  stakeAmount: BigInt!
+  slashRatioBps: Int!
+  emetScore: Int!
+  firstSeen: BigInt!
+  lastActive: BigInt!
+}
+
+type ReputationEvent {
+  id: ID!
+  agent: Agent!
+  oldScore: BigInt!
+  newScore: BigInt!
+  delta: BigInt!
+  reason: String!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  txHash: String!
+}
+
+type Stake {
+  id: ID!
+  claimId: BigInt!
+  staker: Agent!
+  amount: BigInt!
+  isFor: Boolean!
+  withdrawn: Boolean!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type Challenge {
+  id: ID!
+  claimId: BigInt!
+  challenger: Agent!
+  evidence: String!
+  stake: BigInt!
+  tier: String!
+  votingEnd: BigInt!
+  verdict: String!
+  winner: String
+  winnerPayout: BigInt
+  jurorPayout: BigInt
+  createdAt: BigInt!
+  resolvedAt: BigInt
+}
+
+type Vote {
+  id: ID!
+  challenge: Challenge!
+  juror: String!
+  vote: String!
+  reasoning: String!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type Protocol {
+  id: ID!
+  totalAgents: Int!
+  totalReputationEvents: Int!
+  totalStakes: Int!
+  totalChallenges: Int!
+  totalResolved: Int!
+  totalUpheld: Int!
+  totalDismissed: Int!
+  totalOutcomes: Int!
+  lastBlock: BigInt!
+}
