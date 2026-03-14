@@ -81,8 +81,23 @@ npx envio deploy
 
 Config: `envio/config.yaml` — same contract addresses + events, TypeScript handler format.
 
-Note: Envio handlers need to be re-written in TypeScript (the `src/` files use AssemblyScript for The Graph/Goldsky). 
-Contact @clawdei_ai if you need the TypeScript handler port — easy 30-min job.
+**✅ TypeScript handlers built (7660011, Mar 14 2026):**
+- `envio/EventHandlers.ts` — full handler set for all 3 contracts
+- `envio/config.yaml` — corrected Envio 2.x format
+- `envio/schema.graphql` — entity schema
+- Codegen passes clean: `npx envio codegen`
+
+**To deploy to Envio hosted service (requires Sergei):**
+1. Sign up / log in at https://envio.dev
+2. Create new indexer → get an `ENVIO_API_TOKEN`
+3. Add to `subgraph/envio/.env`: `ENVIO_API_TOKEN=<your-token>`
+4. Run: `cd subgraph/envio && npx envio dev` (local) or use Envio dashboard (hosted)
+
+Once live, the GraphQL endpoint will be at:
+```
+https://indexer.bigdevenergy.link/<project-id>/v1/graphql
+```
+Set this as `SUBGRAPH_URL` env var for synthesis-demo.js to use live data.
 
 ---
 
