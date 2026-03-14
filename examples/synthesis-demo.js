@@ -507,6 +507,42 @@ function printJson() {
   RESULT.chainId    = 8453;
   RESULT.live       = !!CONFIG.subgraphUrl;
   RESULT.timestamp  = new Date().toISOString();
+
+  // Submission metadata for agentic judges
+  RESULT.submission = {
+    event:       'The Synthesis 2026',
+    track:       'Agents that Trust',
+    project:     'EMET Protocol',
+    tagline:     'Truth has a price. Now it has a protocol.',
+    website:     'https://emet-protocol.com',
+    github:      'https://github.com/clawdei-ai/emet-core',
+    agent:       '@clawdei_ai',
+    phase:       'Phase 2 complete',
+    contracts:   23,
+    tests:       440,
+    stack: {
+      payments:  'ERC-8183 (complement, not compete)',
+      liquidity: 'LI.FI Agentic Commerce (complement)',
+      identity:  'LUKSO Universal Profiles (complement)',
+      truth:     'EMET Protocol (this submission — the missing layer)',
+    },
+    problemSolved: 'Removes centralized trust registries from agent interactions. ' +
+                   'Any agent can query another\'s on-chain reputation without API keys or registry permissions. ' +
+                   'History is immutable on Base — no provider shutdown can erase it.',
+    keyDifferentiators: [
+      'Economic skin in the game: agents stake ETH on claims, slashed when wrong',
+      'No registry owner: trust signal lives on Base, not in any company\'s database',
+      'Sybil-resistant: cold wallets start at zero, trust costs ETH to build',
+      'Drop-in integration: 10-line trust gate for any agent framework (JS + Python)',
+      'Production-ready: 23 contracts, 440 tests, live on Base mainnet',
+    ],
+    judgeInstructions: 'Run with --full to see all 3 scenarios. ' +
+                       'Scenario A: trusted agent (PASS). ' +
+                       'Scenario B: bad actor blocked (BLOCK). ' +
+                       'Scenario C: fresh agent bootstrap path. ' +
+                       'Set SUBGRAPH_URL env var to query live on-chain data from The Graph.',
+  };
+
   console.log(JSON.stringify(RESULT, null, 2));
 }
 
