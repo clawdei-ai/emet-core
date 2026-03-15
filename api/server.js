@@ -10,7 +10,7 @@
  *
  * Default port: 3141 (override with PORT env var)
  * 
- * @version 0.4.0
+ * @version 0.6.0
  */
 
 const express = require('express');
@@ -18,6 +18,7 @@ const cors = require('cors');
 const emet = require('../core');
 const store = require('./store');
 const reputation = require('./db/reputation');
+const { resolveOnChain } = require('./onchain');
 
 const app = express();
 const PORT = process.env.PORT || 3141;
@@ -404,7 +405,7 @@ app.post('/reputation/:agentId/verify', (req, res) => {
  *     -H "Content-Type: application/json" \
  *     -d '{"requester":"emet:agent:beta:8bf14243","candidate":"emet:agent:alpha:4f2f7756"}'
  */
-app.post('/trust-gate', (req, res) => {
+app.post('/trust-gate', async (req, res) => {
   try {
     const { requester, candidate, threshold: thresholdKey = 'standard', taskType } = req.body;
 
@@ -413,14 +414,14 @@ app.post('/trust-gate', (req, res) => {
     }
 
     const thresh = TRUST_THRESHOLDS[thresholdKey] || TRUST_THRESHOLDS.standard;
+    const subgraph = process.env.SUBGRAPH_URL || null;
 
     // ── Resolve reputation ────────────────────────────────────────────────
-    // First try local SQLite store, then simulation snapshot, then fresh baseline
+    // Priority: local SQLite → on-chain query (Base mainnet) → simulation snapshot → baseline
     const localRep  = reputation.getReputation(candidate);
     const simSnap   = SIMULATION_AGENTS[candidate];
-    const subgraph  = process.env.SUBGRAPH_URL || null;
 
-    let score, slashCount, slashRate, taskCount, source;
+    let score, slashCount, slashRate, taskCount, source, onchainData = null;
 
     if (localRep.verifications > 0) {
       // We have local verification history — use it
@@ -429,20 +430,30 @@ app.post('/trust-gate', (req, res) => {
       slashRate  = localRep.accuracy > 0 ? (1 - localRep.accuracy) : 0;
       taskCount  = localRep.claims;
       source     = 'local-sqlite';
-    } else if (simSnap) {
-      // Use the simulation snapshot (mirrors synthesis-demo.js data)
-      score      = simSnap.emetScore;
-      slashCount = simSnap.slashCount;
-      slashRate  = simSnap.slashRatioBps / 10000;
-      taskCount  = simSnap.taskCount;
-      source     = subgraph ? 'onchain' : 'simulation';
     } else {
-      // Unknown agent — give baseline (new agents start with no history)
-      score      = 50;
-      slashCount = 0;
-      slashRate  = 0;
-      taskCount  = 0;
-      source     = 'baseline';
+      // Try on-chain query for Ethereum addresses (Base mainnet)
+      onchainData = await resolveOnChain(candidate);
+      if (onchainData) {
+        score      = onchainData.score;
+        slashCount = 0; // Reputation contract stores delta, not slash count directly
+        slashRate  = onchainData.positive ? 0 : Math.max(0, (50 - score) / 50);
+        taskCount  = onchainData.claimCount;
+        source     = 'onchain';
+      } else if (simSnap) {
+        // Use the simulation snapshot (mirrors synthesis-demo.js data)
+        score      = simSnap.emetScore;
+        slashCount = simSnap.slashCount;
+        slashRate  = simSnap.slashRatioBps / 10000;
+        taskCount  = simSnap.taskCount;
+        source     = subgraph ? 'onchain' : 'simulation';
+      } else {
+        // Unknown agent — give baseline (new agents start with no history)
+        score      = 50;
+        slashCount = 0;
+        slashRate  = 0;
+        taskCount  = 0;
+        source     = 'baseline';
+      }
     }
 
     // ── Decision logic ────────────────────────────────────────────────────
@@ -484,6 +495,16 @@ app.post('/trust-gate', (req, res) => {
       reason:     reasons.join('; '),
       threshold:  { key: thresholdKey, ...thresh },
       source,
+      // On-chain enrichment (when candidate is an Ethereum address)
+      ...(onchainData && {
+        onchain: {
+          tier:       onchainData.tier,
+          multiplier: onchainData.multiplier,
+          positive:   onchainData.positive,
+          rawScore:   onchainData.rawScore,
+          contracts:  'Base mainnet — EMETReputation 0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e',
+        }
+      }),
       subgraphUrl: subgraph ? subgraph.substring(0, 40) + '...' : null,
       chain:      'Base mainnet (chainId: 8453)',
       contracts: {
@@ -600,7 +621,7 @@ if (require.main === module) {
   app.listen(PORT, () => {
     const claims = store.list();
     const schemaVersion = store.getSchemaVersion();
-    console.log(`⚡ EMET API v0.4.0 listening on http://localhost:${PORT}`);
+    console.log(`⚡ EMET API v0.6.0 listening on http://localhost:${PORT}`);
     console.log(`   SQLite storage (schema v${schemaVersion})`);
     console.log(`   ${claims.length} claim(s) in store`);
   });
