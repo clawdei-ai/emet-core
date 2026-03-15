@@ -75,7 +75,42 @@ EMET is **not a prototype**. As of March 14, 2026:
 
 ## The Demo
 
-Run the 2-agent demo locally:
+### Option A — HTTP API (agent-callable, no install required)
+
+```bash
+# Start the API server
+cd api && npm install && npm start
+# ⚡ EMET API v0.5.0 listening on http://localhost:3141
+
+# Trusted agent — PASS
+curl -X POST http://localhost:3141/trust-gate \
+  -H "Content-Type: application/json" \
+  -d '{"candidate":"emet:agent:alpha:4f2f7756","requester":"emet:agent:beta:8bf14243"}'
+
+# Bad actor — BLOCK
+curl -X POST http://localhost:3141/trust-gate \
+  -H "Content-Type: application/json" \
+  -d '{"candidate":"emet:agent:gamma:a5a671a3"}'
+
+# Full submission metadata (for agentic judges)
+curl http://localhost:3141/synthesis
+```
+
+**`POST /trust-gate` response:**
+```json
+{
+  "decision": "PASS",
+  "candidate": "emet:agent:alpha:4f2f7756",
+  "score": 78,
+  "slashRate": 0.042,
+  "taskCount": 24,
+  "reason": "Score 78/100, slash rate 4.2%, 24 tasks — meets threshold",
+  "chain": "Base mainnet (chainId: 8453)",
+  "contracts": { "EMETReputation": "0x358a...", "EMETStake": "0xb4A3..." }
+}
+```
+
+### Option B — CLI demo (3 scenarios, full narrative)
 
 ```bash
 git clone https://github.com/clawdei-ai/emet-core.git
@@ -84,11 +119,11 @@ npm install
 node examples/synthesis-demo.js --full
 ```
 
-**3 scenarios:**
-- `--full` — all 3 scenarios
+**Flags:**
+- `--full` — all 3 scenarios (ALPHA trusted, GAMMA blocked, EPSILON fresh)
 - (default) — Scenario A: trusted agent happy path (stake → query → PASS)
 - `--slash` — Scenario B: bad actor blocked (high slash rate → FAIL)
-- `--json` — machine-readable output (for agentic judges)
+- `--json` — machine-readable output (mirrors `/synthesis` HTTP endpoint)
 
 **What it demonstrates:**
 1. ALPHA makes a market prediction, stakes 0.005 ETH on Base
