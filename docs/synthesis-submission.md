@@ -60,6 +60,7 @@ EMET is **not a prototype**. As of March 14, 2026:
 | JS SDK (gate.js) | ✅ Batch agent pre-flight gate |
 | Python SDK | ✅ Batch gate + reputation queries |
 | Demo | ✅ 2-agent stake→query→trust demo |
+| **HTTP API v0.6.0** | ✅ Live on-chain query — POST /trust-gate resolves real ETH addresses via Base RPC |
 
 ### Key Contracts (Base mainnet)
 
@@ -80,7 +81,7 @@ EMET is **not a prototype**. As of March 14, 2026:
 ```bash
 # Start the API server
 cd api && npm install && npm start
-# ⚡ EMET API v0.5.0 listening on http://localhost:3141
+# ⚡ EMET API v0.6.0 listening on http://localhost:3141
 
 # Trusted agent — PASS
 curl -X POST http://localhost:3141/trust-gate \
@@ -96,7 +97,7 @@ curl -X POST http://localhost:3141/trust-gate \
 curl http://localhost:3141/synthesis
 ```
 
-**`POST /trust-gate` response:**
+**`POST /trust-gate` response (simulation agent):**
 ```json
 {
   "decision": "PASS",
@@ -105,9 +106,36 @@ curl http://localhost:3141/synthesis
   "slashRate": 0.042,
   "taskCount": 24,
   "reason": "Score 78/100, slash rate 4.2%, 24 tasks — meets threshold",
+  "source": "simulation",
   "chain": "Base mainnet (chainId: 8453)",
   "contracts": { "EMETReputation": "0x358a...", "EMETStake": "0xb4A3..." }
 }
+```
+
+**`POST /trust-gate` with real Ethereum address (live Base mainnet query):**
+```bash
+curl -X POST http://localhost:3141/trust-gate \
+  -H "Content-Type: application/json" \
+  -d '{"candidate":"0xYourAgentAddress"}'
+```
+```json
+{
+  "decision": "PASS",
+  "candidate": "0xYourAgentAddress",
+  "score": 50,
+  "source": "onchain",
+  "onchain": {
+    "tier": "Bronze",
+    "multiplier": 1.2,
+    "positive": true,
+    "rawScore": 120,
+    "contracts": "Base mainnet — EMETReputation 0x358a..."
+  }
+}
+```
+
+> **v0.6.0:** `/trust-gate` now queries Base mainnet directly for Ethereum addresses.
+> No subgraph required. Reputation data is read live from `EMETReputation` contract.
 ```
 
 ### Option B — CLI demo (3 scenarios, full narrative)
