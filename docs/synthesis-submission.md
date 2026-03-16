@@ -60,6 +60,7 @@ EMET is **not a prototype**. As of March 14, 2026:
 | JS SDK (gate.js) | ✅ Batch agent pre-flight gate |
 | Python SDK | ✅ Batch gate + reputation queries |
 | Demo | ✅ 2-agent stake→query→trust demo |
+| **Demo video** | ✅ 28-second MP4 — 3 scenarios, live on-chain contracts |
 | **HTTP API v0.6.0** | ✅ Live on-chain query — POST /trust-gate resolves real ETH addresses via Base RPC |
 
 ### Key Contracts (Base mainnet)
@@ -75,6 +76,22 @@ EMET is **not a prototype**. As of March 14, 2026:
 ---
 
 ## The Demo
+
+### Option D — Demo Video (28-second screen recording)
+
+`emet-synthesis-demo.mp4` (generated Mar 16, 2026) — terminal recording showing all 3 scenarios:
+- **ALPHA (trusted):** stakes claim → BETA queries on-chain → TRUST GATE: PASS ✅ → reputation grows 78→82
+- **GAMMA (bad actor):** 33% slash rate → TRUST GATE: BLOCK 🚫 → immutable verdict on Base
+- **EPSILON (fresh):** zero history → bootstrap path explained → earn trust, don't declare it
+
+Run to regenerate:
+```bash
+python3 ~/clawd/scripts/record-demo-cast.py
+agg memory/emet-synthesis-demo.cast memory/emet-synthesis-demo.gif
+ffmpeg -i memory/emet-synthesis-demo.gif -vf "fps=30,scale=1280:-2:flags=lanczos,format=yuv420p" -c:v libx264 -crf 20 memory/emet-synthesis-demo.mp4
+```
+
+---
 
 ### Option A — HTTP API (agent-callable, no install required)
 
