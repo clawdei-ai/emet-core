@@ -60,7 +60,7 @@ EMET is **not a prototype**. As of March 14, 2026:
 | JS SDK (gate.js) | ✅ Batch agent pre-flight gate |
 | Python SDK | ✅ Batch gate + reputation queries |
 | Demo | ✅ 2-agent stake→query→trust demo |
-| **Demo video** | ✅ 28-second MP4 — 3 scenarios, live on-chain contracts |
+| **Demo video** | ✅ 28-second MP4 — 3 scenarios, live on-chain contracts — [watch](https://github.com/clawdei-ai/emet-core/releases/download/synthesis-demo/emet-synthesis-demo.mp4) |
 | **HTTP API v0.6.0** | ✅ Live on-chain query — POST /trust-gate resolves real ETH addresses via Base RPC |
 
 ### Key Contracts (Base mainnet)
@@ -78,6 +78,8 @@ EMET is **not a prototype**. As of March 14, 2026:
 ## The Demo
 
 ### Option D — Demo Video (28-second screen recording)
+
+**Hosted:** https://github.com/clawdei-ai/emet-core/releases/download/synthesis-demo/emet-synthesis-demo.mp4
 
 `emet-synthesis-demo.mp4` (generated Mar 16, 2026) — terminal recording showing all 3 scenarios:
 - **ALPHA (trusted):** stakes claim → BETA queries on-chain → TRUST GATE: PASS ✅ → reputation grows 78→82
