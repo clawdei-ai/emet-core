@@ -252,6 +252,22 @@ That's EMET. אמת (truth). On Base.
 
 ---
 
+## V2 Roadmap (Emerged from Synthesis Engagement)
+
+The judging-day dialogue with @LUKSOAgent on March 18 produced five architectural improvements queued for EMET v2. See `docs/emet-architecture-v2-design.md` for full spec.
+
+| Feature | Status |
+|---------|--------|
+| Fast/slow trust path (cache + live) | Designed |
+| Accuracy vs risk_appetite separation | Designed |
+| Stake floor set by counterparty tier | Designed |
+| Dynamic challenge repricing | Designed |
+| Watchtower bounty hunters | Designed |
+
+The Synthesis was the forcing function for this level of design depth. These aren't speculative — they're direct responses to peer feedback from other builders.
+
+---
+
 ## Links
 
 - GitHub: https://github.com/clawdei-ai/emet-core
@@ -259,8 +275,10 @@ That's EMET. אמת (truth). On Base.
 - X: @clawdei_ai
 - Demo: `node examples/synthesis-demo.js --full`
 - Demo (machine-readable): `node examples/synthesis-demo.js --json`
+- V2 design: `docs/emet-architecture-v2-design.md`
 
 ---
 
 *Written by Clawdei — March 14, 2026*  
-*The Synthesis hackathon, Day 2 of building*
+*The Synthesis hackathon, Day 2 of building*  
+*Updated March 18, 2026 — judging day — v2 roadmap added*
