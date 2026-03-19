@@ -19,6 +19,8 @@ const emet = require('../core');
 const store = require('./store');
 const reputation = require('./db/reputation');
 const { resolveOnChain } = require('./onchain');
+const { trustCache } = require('./trust-cache');
+const { buildAgentProfile, checkStakeFloor } = require('./agent-profile');
 
 const app = express();
 const PORT = process.env.PORT || 3141;
@@ -92,7 +94,7 @@ app.get('/', (_req, res) => {
   const schemaVersion = store.getSchemaVersion();
   res.json({
     name: '@emet-protocol/api',
-    version: '0.5.0',
+    version: '0.7.0',
     storage: 'sqlite',
     schemaVersion,
     chain: 'Base mainnet (chainId: 8453)',
@@ -107,8 +109,17 @@ app.get('/', (_req, res) => {
       'POST   /tree/prove',
       'GET    /reputation/:agentId',
       'GET    /leaderboard',
-      'POST   /trust-gate',
+      'POST   /trust-gate              (v2: mode=fast|slow|auto, accuracyScore, riskAppetite, stakeFloor)',
+      'POST   /trust-gate/invalidate   (v2: invalidate cache on slash event)',
+      'GET    /trust-gate/cache/stats  (v2: cache observability)',
       'GET    /synthesis',
+    ],
+    v2Features: [
+      'fast/slow trust path (mode param: fast|slow|auto)',
+      'accuracyScore separated from legacy blended score',
+      'riskAppetite classification (low/medium/high)',
+      'stake floor enforcement by requester tier',
+      'slash-event cache invalidation endpoint',
     ],
   });
 });
@@ -387,27 +398,50 @@ app.post('/reputation/:agentId/verify', (req, res) => {
  *   candidate    {string}  — agent ID being evaluated (the agent you may trust)
  *   taskType     {string?} — optional task type context (e.g. "market_prediction")
  *   threshold    {string?} — "strict" | "standard" (default) | "lenient"
+ *   mode         {string?} — "fast" | "slow" | "auto" (default)
+ *                            fast: cache-only (< 50ms), skips on-chain query
+ *                            slow: always fresh on-chain query (< 2s)
+ *                            auto: fast path for established relationships (3+
+ *                                  interactions), slow for new agents + first contact
  *
  * Returns:
- *   decision     "PASS" | "BLOCK"
- *   candidate    {string}
- *   score        {number}  0-100 EMET reputation score
- *   slashRate    {number}  slash rate as a fraction (0-1)
- *   taskCount    {number}
- *   reason       {string}  human-readable explanation
- *   threshold    {object}  thresholds that were applied
- *   source       "onchain" | "simulation"
- *   chain        "Base mainnet (chainId: 8453)"
- *   contracts    {object}  Base mainnet contract addresses
+ *   decision       "PASS" | "BLOCK"
+ *   candidate      {string}
+ *   score          {number}  0-100 EMET legacy score (v1 compat)
+ *   accuracyScore  {number}  v2: accuracy-only score (% correct claims, 0-100)
+ *   riskAppetite   {string}  v2: "low" | "medium" | "high" | "unknown"
+ *   slashRate      {number}  slash rate as a fraction (0-1)
+ *   taskCount      {number}
+ *   reason         {string}  human-readable explanation
+ *   path           "fast" | "slow"  — which resolution path was used
+ *   threshold      {object}  thresholds that were applied
+ *   source         "onchain" | "simulation" | "cache"
+ *   chain          "Base mainnet (chainId: 8453)"
+ *   contracts      {object}  Base mainnet contract addresses
+ *   stakeFloor     {object}  v2: stake floor check (requester tier → candidate meets floor?)
  *
  * Example:
  *   curl -X POST http://localhost:3141/trust-gate \
  *     -H "Content-Type: application/json" \
  *     -d '{"requester":"emet:agent:beta:8bf14243","candidate":"emet:agent:alpha:4f2f7756"}'
+ *
+ *   # Fast path (established relationship):
+ *   curl -X POST http://localhost:3141/trust-gate \
+ *     -d '{"requester":"beta","candidate":"alpha","mode":"fast"}'
+ *
+ *   # Always fresh:
+ *   curl -X POST http://localhost:3141/trust-gate \
+ *     -d '{"requester":"beta","candidate":"alpha","mode":"slow"}'
  */
 app.post('/trust-gate', async (req, res) => {
   try {
-    const { requester, candidate, threshold: thresholdKey = 'standard', taskType } = req.body;
+    const {
+      requester,
+      candidate,
+      threshold: thresholdKey = 'standard',
+      taskType,
+      mode = 'auto',
+    } = req.body;
 
     if (!candidate) {
       return res.status(400).json({ error: 'Missing required field: candidate' });
@@ -416,12 +450,48 @@ app.post('/trust-gate', async (req, res) => {
     const thresh = TRUST_THRESHOLDS[thresholdKey] || TRUST_THRESHOLDS.standard;
     const subgraph = process.env.SUBGRAPH_URL || null;
 
-    // ── Resolve reputation ────────────────────────────────────────────────
-    // Priority: local SQLite → on-chain query (Base mainnet) → simulation snapshot → baseline
+    // ── Fast/slow path resolution (EMET v2) ──────────────────────────────
+    //
+    // fast:  Check cache only → return immediately (no on-chain query)
+    // slow:  Always query on-chain (bypass cache)
+    // auto:  Fast for established relationships, slow for new agents
+    //
+    let resolutionPath = 'slow'; // default
+
+    if (mode === 'fast') {
+      resolutionPath = 'fast';
+    } else if (mode === 'slow') {
+      resolutionPath = 'slow';
+    } else {
+      // auto: fast path if established relationship (3+ interactions)
+      const established = trustCache.isEstablished(candidate, requester);
+      resolutionPath = established ? 'fast' : 'slow';
+    }
+
+    // ── Try cache first (fast path) ───────────────────────────────────────
+    if (resolutionPath === 'fast') {
+      const cached = trustCache.get(candidate, requester);
+      if (cached) {
+        // Track interaction and return cached result
+        trustCache.trackInteraction(candidate, requester);
+        return res.json({
+          ...cached,
+          path: 'fast',
+          source: 'cache',
+          cacheHit: true,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      // Cache miss on fast path → fall through to slow resolution
+      resolutionPath = 'slow';
+    }
+
+    // ── Slow path: resolve reputation from SQLite / on-chain / simulation ─
     const localRep  = reputation.getReputation(candidate);
     const simSnap   = SIMULATION_AGENTS[candidate];
 
     let score, slashCount, slashRate, taskCount, source, onchainData = null;
+    let rawStakeAmount = '0';
 
     if (localRep.verifications > 0) {
       // We have local verification history — use it
@@ -441,11 +511,12 @@ app.post('/trust-gate', async (req, res) => {
         source     = 'onchain';
       } else if (simSnap) {
         // Use the simulation snapshot (mirrors synthesis-demo.js data)
-        score      = simSnap.emetScore;
-        slashCount = simSnap.slashCount;
-        slashRate  = simSnap.slashRatioBps / 10000;
-        taskCount  = simSnap.taskCount;
-        source     = subgraph ? 'onchain' : 'simulation';
+        score          = simSnap.emetScore;
+        slashCount     = simSnap.slashCount;
+        slashRate      = simSnap.slashRatioBps / 10000;
+        taskCount      = simSnap.taskCount;
+        rawStakeAmount = simSnap.stakeAmount;
+        source         = subgraph ? 'onchain' : 'simulation';
       } else {
         // Unknown agent — give baseline (new agents start with no history)
         score      = 50;
@@ -456,13 +527,28 @@ app.post('/trust-gate', async (req, res) => {
       }
     }
 
+    // ── Build v2 agent profile (accuracy + risk separation) ───────────────
+    const agentProfile = buildAgentProfile({
+      emetScore:   score,
+      slashCount,
+      taskCount,
+      stakeAmount: rawStakeAmount,
+      tier:        onchainData?.tier || null,
+    });
+
+    // ── Stake floor check (requester tier → candidate must meet floor) ────
+    const stakeFloor = checkStakeFloor(agentProfile, agentProfile.tier);
+
     // ── Decision logic ────────────────────────────────────────────────────
+    // V2: threshold applies to accuracyScore (not legacy blended score)
+    const effectiveScore = agentProfile.accuracyScore;
+
     const reasons = [];
     let pass = true;
 
-    if (score < thresh.minScore) {
+    if (effectiveScore < thresh.minScore) {
       pass = false;
-      reasons.push(`Score ${score} below minimum ${thresh.minScore}`);
+      reasons.push(`Accuracy score ${effectiveScore} below minimum ${thresh.minScore}`);
     }
     if (slashRate > thresh.maxSlashRate) {
       pass = false;
@@ -477,24 +563,46 @@ app.post('/trust-gate', async (req, res) => {
         reasons.push(`Limited task history (${taskCount} tasks) — treat with caution`);
       }
     }
-
-    if (pass && reasons.length === 0) {
-      reasons.push(`Score ${score}/100, slash rate ${(slashRate * 100).toFixed(1)}%, ${taskCount} tasks — meets threshold`);
+    if (!stakeFloor.meetsFloor && thresholdKey === 'strict') {
+      pass = false;
+      reasons.push(`Stake floor not met: required ${stakeFloor.requiredFloorEth} ETH avg, candidate has ${stakeFloor.candidateAvgEth || '0'} ETH`);
     }
 
-    // ── Response ──────────────────────────────────────────────────────────
+    if (pass && reasons.length === 0) {
+      reasons.push(`Accuracy ${effectiveScore}/100, slash rate ${(slashRate * 100).toFixed(1)}%, ${taskCount} tasks — meets threshold`);
+    }
+
+    // ── Build response ─────────────────────────────────────────────────────
     const response = {
-      decision:   pass ? 'PASS' : 'BLOCK',
+      decision:      pass ? 'PASS' : 'BLOCK',
       candidate,
-      requester:  requester || null,
-      taskType:   taskType || null,
+      requester:     requester || null,
+      taskType:      taskType || null,
+
+      // V1 compat
       score,
+
+      // V2: separated dimensions
+      accuracyScore: agentProfile.accuracyScore,
+      riskAppetite:  agentProfile.riskAppetite,
+      tier:          agentProfile.tier,
+
       slashCount,
-      slashRate:  parseFloat(slashRate.toFixed(4)),
+      slashRate:     parseFloat(slashRate.toFixed(4)),
       taskCount,
-      reason:     reasons.join('; '),
-      threshold:  { key: thresholdKey, ...thresh },
+      reason:        reasons.join('; '),
+      path:          resolutionPath,
+      threshold:     { key: thresholdKey, ...thresh },
       source,
+
+      // V2: stake floor (requester tier enforces min stake)
+      stakeFloor: {
+        meetsFloor:       stakeFloor.meetsFloor,
+        requiredFloorEth: stakeFloor.requiredFloorEth,
+        candidateAvgEth:  stakeFloor.candidateAvgEth || '0',
+        requesterTier:    agentProfile.tier,
+      },
+
       // On-chain enrichment (when candidate is an Ethereum address)
       ...(onchainData && {
         onchain: {
@@ -505,6 +613,7 @@ app.post('/trust-gate', async (req, res) => {
           contracts:  'Base mainnet — EMETReputation 0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e',
         }
       }),
+
       subgraphUrl: subgraph ? subgraph.substring(0, 40) + '...' : null,
       chain:      'Base mainnet (chainId: 8453)',
       contracts: {
@@ -515,6 +624,10 @@ app.post('/trust-gate', async (req, res) => {
       },
       timestamp: new Date().toISOString(),
     };
+
+    // ── Cache the result (for future fast-path hits) ───────────────────────
+    trustCache.set(candidate, requester, response);
+    trustCache.trackInteraction(candidate, requester);
 
     res.json(response);
   } catch (e) {
@@ -536,7 +649,7 @@ app.get('/synthesis', (_req, res) => {
 
   res.json({
     protocol:      'EMET (אמת — truth)',
-    version:       '0.5.0',
+    version:       '0.7.0',
     hackathon:     'The Synthesis 2026',
     track:         'Agents that Trust',
     agent:         'Clawdei (@clawdei_ai)',
@@ -555,6 +668,10 @@ app.get('/synthesis', (_req, res) => {
         '3. POST /trust-gate with {"candidate":"emet:agent:epsilon:c2d91e04"} — see a fresh agent baseline',
         '4. GET /leaderboard — see agents ranked by stake-weighted trust score',
         '5. GET /reputation/emet:agent:alpha:4f2f7756 — full reputation profile',
+        '6. [v2] POST /trust-gate with {"candidate":"alpha","mode":"fast"} — fast path (cache, <50ms)',
+        '7. [v2] POST /trust-gate with {"candidate":"alpha","mode":"slow"} — slow path (live, <2s)',
+        '8. [v2] POST /trust-gate with {"candidate":"alpha"} — v2 response includes accuracyScore + riskAppetite',
+        '9. [v2] POST /trust-gate/invalidate with {"candidate":"alpha"} — simulate slash event cache invalidation',
       ],
     },
     infrastructure: {
@@ -584,12 +701,50 @@ app.get('/synthesis', (_req, res) => {
       'Production-ready — 23 contracts, 440 tests, not a prototype',
       'Agent-callable — this API endpoint IS the integration point',
       'Sybil resistance — trust requires ETH stake, cold wallets start at zero',
+      '[v2] Fast/slow trust path — <50ms cache for established agents, live query for new contacts',
+      '[v2] Accuracy ≠ risk appetite — high-stakes correct agents not penalized for size of bets',
+      '[v2] Stake floor by requester tier — Gold agents enforce higher standards on counterparties',
     ],
     liveStats: {
       localClaims: claimCount,
       localAgents: agentCount,
       mode:        process.env.SUBGRAPH_URL ? 'onchain' : 'simulation',
     },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ---- Cache (EMET v2) -------------------------------------------------------
+
+/**
+ * POST /trust-gate/invalidate — Invalidate cached trust for an agent (slash event).
+ *
+ * Call this when a slash event is recorded on-chain for an agent.
+ * Forces the next /trust-gate query to use the slow path (fresh on-chain data).
+ *
+ * Body: { candidate } — agent whose cache should be invalidated
+ */
+app.post('/trust-gate/invalidate', (req, res) => {
+  const { candidate } = req.body;
+  if (!candidate) {
+    return res.status(400).json({ error: 'Missing required field: candidate' });
+  }
+  trustCache.invalidate(candidate);
+  res.json({
+    ok: true,
+    candidate,
+    message: `Trust cache invalidated for ${candidate}. Next query will use slow path.`,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * GET /trust-gate/cache/stats — Cache statistics for observability.
+ */
+app.get('/trust-gate/cache/stats', (_req, res) => {
+  res.json({
+    ...trustCache.stats(),
+    ttlSeconds: 60,
     timestamp: new Date().toISOString(),
   });
 });
@@ -621,7 +776,7 @@ if (require.main === module) {
   app.listen(PORT, () => {
     const claims = store.list();
     const schemaVersion = store.getSchemaVersion();
-    console.log(`⚡ EMET API v0.6.0 listening on http://localhost:${PORT}`);
+    console.log(`⚡ EMET API v0.7.0 listening on http://localhost:${PORT}`);
     console.log(`   SQLite storage (schema v${schemaVersion})`);
     console.log(`   ${claims.length} claim(s) in store`);
   });
