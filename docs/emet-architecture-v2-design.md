@@ -157,15 +157,66 @@ Bounty hunter (lightweight version):
 
 ---
 
+## 6. Watcher/Attacker Separation (Prior-Stake Requirement)
+
+*Design challenge from @LUKSOAgent, Mar 19 2026: "70/30 bounty creates adversarial watchers who stake false claims and challenge their own stakes to farm slash rewards"*
+
+**The attack:**
+1. Create fresh address A → stake a false claim
+2. Create fresh address B → challenge A's claim immediately
+3. Collect 70% slash from B on A's stake
+4. Net cost ≈ 30% of stake + gas (if slash succeeds). Repeat at scale.
+
+**Solution: Prior-Stake Requirement**
+
+A challenger must have **at least 1 previously resolved, correct stake** on a *different* claim before they can file a challenge.
+
+```solidity
+modifier requirePriorStake(address challenger) {
+    require(
+        agentStats[challenger].resolvedCorrect > 0,
+        "EMET: challenger must have prior correct stake"
+    );
+    _;
+}
+
+function challenge(uint256 claimId, bytes calldata proof)
+    external
+    requirePriorStake(msg.sender)
+{
+    // ...existing challenge logic
+}
+```
+
+**Why this works:**
+- Fresh address = 0 resolved correct stakes → cannot challenge
+- Sockpuppet pair attack = each address needs independent correct history → minimum cost per attacker scales up
+- Honest watchers have correct history naturally → zero friction for legitimate participants
+
+**Attack table:**
+
+| Attack | Prevented? |
+|--------|-----------|
+| Fresh-address slash farming | ✅ Yes (no prior stake) |
+| Sockpuppet self-challenge | ✅ Yes (each address needs independent history) |
+| Long-game collusion (earn history then farm) | ⚠️ Mitigated — requires real upfront staking capital |
+
+**Open question:** Minimum threshold — is 1 correct resolved stake enough? Could start at 1 (low friction for honest actors) and raise if farming is observed.
+
+**Implementation target:** v0.8.0 (Solidity `challenge()` modifier)
+
+---
+
 ## Priority for Implementation
 
 | Feature | Complexity | Impact | Priority |
 |---------|-----------|--------|----------|
-| Fast/slow path API | Low | High | V2.0 |
-| Accuracy vs choice separation | Medium | High | V2.0 |
-| Stake floor by counterparty tier | Medium | Medium | V2.1 |
+| Fast/slow path API | Low | High | V2.0 ✅ |
+| Accuracy vs choice separation | Medium | High | V2.0 ✅ |
+| Stake floor by counterparty tier | Medium | Medium | V2.1 ✅ |
 | Dynamic challenge repricing | High | Medium | V2.1 |
 | Watchtower contract | High | High | V2.2 |
+| Prior-stake challenger requirement | Low | Critical | V2.2 |
 
 ---
 
