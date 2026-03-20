@@ -206,6 +206,8 @@ contract EMETChallengeV3 {
     error ChallengeAlreadyExists(uint256 claimId);
     error ChallengeDoesNotExist(uint256 challengeId);
     error CannotChallengeOwnClaim();
+    /// @notice Challenger has no prior resolved-correct stake history (slash-farming guard)
+    error InsufficientPriorStakeHistory(address challenger);
     error InsufficientStake(uint256 provided, uint256 required);
     error VotingPeriodNotStarted();
     error VotingPeriodEnded();
@@ -252,9 +254,23 @@ contract EMETChallengeV3 {
         _;
     }
 
+    /// @notice Guard: challenger must have ≥1 previously resolved correct stake.
+    /// @dev Prevents slash-farming: an attacker can't create a fresh address to
+    ///      repeatedly challenge and collect slash rewards without a legitimate
+    ///      reputation history. Honest watchers accumulate this count naturally.
+    ///      Fresh address → BLOCKED. Sockpuppet → BLOCKED. Slashed bot → BLOCKED.
+    ///      Honest watcher with track record → PASS.
+    modifier requiresPriorStake() {
+        if (reputationContract.resolvedCorrectCount(msg.sender) == 0) {
+            revert InsufficientPriorStakeHistory(msg.sender);
+        }
+        _;
+    }
+
     // ============ Challenge Creation ============
 
     /// @notice Initiate a challenge against an active claim
+    /// @dev Requires caller to have ≥1 prior resolved-correct stake (anti slash-farming).
     function initiateChallenge(
         uint256 claimId,
         string calldata evidence,
@@ -266,8 +282,13 @@ contract EMETChallengeV3 {
         if (claim.status != EMETRegistry.ClaimStatus.Active) {
             revert ClaimNotActive(claimId);
         }
+        // Check self-challenge before prior-stake guard so error is predictable
         if (claim.submitter == msg.sender) {
             revert CannotChallengeOwnClaim();
+        }
+        // Prior-stake guard: prevent slash-farming from fresh/sockpuppet addresses
+        if (reputationContract.resolvedCorrectCount(msg.sender) == 0) {
+            revert InsufficientPriorStakeHistory(msg.sender);
         }
         if (activeChallenge[claimId] != 0) {
             revert ChallengeAlreadyExists(claimId);
@@ -569,7 +590,7 @@ contract EMETChallengeV3 {
         uint256 challengeId,
         string calldata evidence,
         uint256 stake
-    ) external returns (uint256 newChallengeId) {
+    ) external requiresPriorStake returns (uint256 newChallengeId) {
         Challenge storage original = challenges[challengeId];
 
         if (original.challenger == address(0)) revert ChallengeDoesNotExist(challengeId);

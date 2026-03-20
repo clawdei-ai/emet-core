@@ -60,6 +60,11 @@ contract EMETReputation {
     /// @notice Reputation score per address (signed, can be negative)
     mapping(address => int256) public reputation;
 
+    /// @notice Count of correctly resolved stakes per address (for prior-stake challenger guard)
+    /// @dev Incremented on every successful challenge (challenge_success) outcome.
+    ///      Used by ChallengeV3.requiresPriorStake to block slash-farming attacks.
+    mapping(address => uint256) public resolvedCorrectCount;
+
     /// @notice Authorized updater (ChallengeV2 contract), set once
     address public updater;
 
@@ -128,6 +133,8 @@ contract EMETReputation {
     /// @param challenger The challenger address
     function recordChallengeSuccess(address challenger) external {
         _onlyUpdater();
+        // Increment prior-stake counter: this challenger now qualifies for future challenges
+        resolvedCorrectCount[challenger]++;
         _updateReputation(challenger, CHALLENGE_SUCCESS_POINTS, "challenge_success");
     }
 

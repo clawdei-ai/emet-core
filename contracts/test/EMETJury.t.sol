@@ -140,6 +140,23 @@ contract EMETJuryTest is Test {
                 bytes32(uint256(60))
             );
         }
+
+        // Seed challenger's resolvedCorrectCount (prior-stake guard: slot 1)
+        // The requiresPriorStake modifier requires ≥1 resolved correct stake.
+        // In tests, the challenger has a legitimate track record.
+        vm.store(
+            address(reputation),
+            keccak256(abi.encode(challenger, uint256(1))), // resolvedCorrectCount mapping at slot 1
+            bytes32(uint256(1))
+        );
+
+        // Seed appellant (address(200)) used in appeal tests — also needs prior-stake history
+        address appellant = address(200);
+        vm.store(
+            address(reputation),
+            keccak256(abi.encode(appellant, uint256(1))),
+            bytes32(uint256(1))
+        );
     }
 
     // ============ Jury Registration Tests ============
