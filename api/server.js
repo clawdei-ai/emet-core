@@ -10,7 +10,7 @@
  *
  * Default port: 3141 (override with PORT env var)
  * 
- * @version 0.6.0
+ * @version 0.8.0
  */
 
 const express = require('express');
@@ -21,6 +21,7 @@ const reputation = require('./db/reputation');
 const { resolveOnChain } = require('./onchain');
 const { trustCache } = require('./trust-cache');
 const { buildAgentProfile, checkStakeFloor } = require('./agent-profile');
+const { priorStakeCheck } = require('./prior-stake');
 
 const app = express();
 const PORT = process.env.PORT || 3141;
@@ -94,7 +95,7 @@ app.get('/', (_req, res) => {
   const schemaVersion = store.getSchemaVersion();
   res.json({
     name: '@emet-protocol/api',
-    version: '0.7.0',
+    version: '0.8.0',
     storage: 'sqlite',
     schemaVersion,
     chain: 'Base mainnet (chainId: 8453)',
@@ -112,6 +113,7 @@ app.get('/', (_req, res) => {
       'POST   /trust-gate              (v2: mode=fast|slow|auto, accuracyScore, riskAppetite, stakeFloor)',
       'POST   /trust-gate/invalidate   (v2: invalidate cache on slash event)',
       'GET    /trust-gate/cache/stats  (v2: cache observability)',
+      'POST   /challenger/validate     (v0.8.0: prior-stake guard — anti slash-farming)',
       'GET    /synthesis',
     ],
     v2Features: [
@@ -120,6 +122,7 @@ app.get('/', (_req, res) => {
       'riskAppetite classification (low/medium/high)',
       'stake floor enforcement by requester tier',
       'slash-event cache invalidation endpoint',
+      'prior-stake challenger guard (v0.8.0) — prevents slash-farming by fresh addresses',
     ],
   });
 });
@@ -746,6 +749,52 @@ app.get('/trust-gate/cache/stats', (_req, res) => {
     ...trustCache.stats(),
     ttlSeconds: 60,
     timestamp: new Date().toISOString(),
+  });
+});
+
+// ---- Challenger Guard (v0.8.0) --------------------------------------------
+
+/**
+ * POST /challenger/validate — Prior-stake guard for challenge eligibility.
+ *
+ * Checks whether an agent has the required track record to challenge a claim.
+ * An agent must have ≥1 resolved CORRECT stake on a DIFFERENT claim.
+ *
+ * This prevents slash-farming: a fresh address or sockpuppet cannot challenge
+ * because they have no prior history. Honest watchers always qualify.
+ *
+ * Body: { challenger, claimId, [minCorrectStakes=1] }
+ *
+ * Response:
+ *   { eligible: true/false, reason, resolvedCorrect, guardVersion, ... }
+ *
+ * Example:
+ *   curl -X POST http://localhost:3141/challenger/validate \
+ *     -H "Content-Type: application/json" \
+ *     -d '{"challenger":"emet:agent:alpha:4f2f7756","claimId":"123"}'
+ */
+app.post('/challenger/validate', (req, res) => {
+  const { challenger, claimId, minCorrectStakes } = req.body || {};
+
+  const missing = requireFields(req.body || {}, ['challenger', 'claimId']);
+  if (missing) return res.status(400).json({ error: missing });
+
+  const result = priorStakeCheck(
+    challenger,
+    claimId,
+    minCorrectStakes ? { minCorrectStakes } : {}
+  );
+
+  const status = result.eligible ? 200 : 403;
+  res.status(status).json({
+    ...result,
+    timestamp: new Date().toISOString(),
+    guardDesign: {
+      rationale: 'Prevents slash-farming by requiring challengers to have prior track record.',
+      attacksBlocked: ['fresh address attack', 'sockpuppet attack'],
+      residualRisk: 'Long-term attacker building fake history — countered by jury tier (V3) for large claims.',
+      reference: 'docs/emet-architecture-v2-design.md — Section 6',
+    },
   });
 });
 

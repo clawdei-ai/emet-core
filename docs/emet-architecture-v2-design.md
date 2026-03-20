@@ -154,7 +154,6 @@ Bounty hunter (lightweight version):
 - Watchtower bond: prevents spam flagging
 - 20% bounty: makes monitoring economically viable
 - No challenge necessary if watchtower flag is accepted by consensus (v3 future feature)
-
 ---
 
 ## 6. Watcher/Attacker Separation (Prior-Stake Requirement)
@@ -167,43 +166,53 @@ Bounty hunter (lightweight version):
 3. Collect 70% slash from B on A's stake
 4. Net cost ≈ 30% of stake + gas (if slash succeeds). Repeat at scale.
 
-**Solution: Prior-Stake Requirement**
+**The solution: Prior-Stake Requirement**
 
 A challenger must have **at least 1 previously resolved, correct stake** on a *different* claim before they can file a challenge.
 
+```
+To challenge claim X, challenger must satisfy:
+  count(resolved correct stakes on claims ≠ X) ≥ 1
+```
+
+**Why this defeats the attack:**
+
+| Attack vector | Defense |
+|---------------|---------|
+| Fresh address challenges immediately | Zero prior stakes → BLOCKED |
+| Sockpuppet with new wallet | No prior history → BLOCKED |
+| Bot stakes wrong intentionally | Wrong stakes get slashed → not counted |
+| Honest watcher who occasionally misses | Has real track record → PASS |
+| Long-game collusion (earn history, then farm) | ⚠️ Mitigated — requires real upfront staking capital |
+
+**Solidity modifier sketch:**
 ```solidity
-modifier requirePriorStake(address challenger) {
+modifier requiresPriorStake(address challenger) {
     require(
         agentStats[challenger].resolvedCorrect > 0,
-        "EMET: challenger must have prior correct stake"
+        "EMET: challenger must have ≥1 resolved correct stake on a different claim"
     );
     _;
 }
 
-function challenge(uint256 claimId, bytes calldata proof)
+function initiateChallenge(uint256 claimId, bytes calldata proof)
     external
-    requirePriorStake(msg.sender)
+    requiresPriorStake(msg.sender)
 {
-    // ...existing challenge logic
+    // challenger validated before any state changes
 }
 ```
 
-**Why this works:**
-- Fresh address = 0 resolved correct stakes → cannot challenge
-- Sockpuppet pair attack = each address needs independent correct history → minimum cost per attacker scales up
-- Honest watchers have correct history naturally → zero friction for legitimate participants
+**Why honest watchers are unaffected:** They accumulate correct stake history naturally through normal participation. Zero friction for legitimate actors. Attackers must *earn* the right to challenge — and earning it requires real ETH across real correct predictions first.
 
-**Attack table:**
+**Residual risk:** A long-term attacker building a fake track record. Counter: the cost of setup (multiple correct stakes) must exceed the bounty on the target. For large claims, jury tier (V3) provides a second defense layer.
 
-| Attack | Prevented? |
-|--------|-----------|
-| Fresh-address slash farming | ✅ Yes (no prior stake) |
-| Sockpuppet self-challenge | ✅ Yes (each address needs independent history) |
-| Long-game collusion (earn history then farm) | ⚠️ Mitigated — requires real upfront staking capital |
+**Implementation status:**
+- `api/prior-stake.js` → `priorStakeCheck(challengerAgentId, targetClaimId)` ✅ (v0.8.0)
+- `POST /challenger/validate` → guard check via HTTP ✅ (v0.8.0)
+- Solidity: `EMETReputation.resolvedCorrectCount(address)` → target v0.9.0 on-chain
 
-**Open question:** Minimum threshold — is 1 correct resolved stake enough? Could start at 1 (low friction for honest actors) and raise if farming is observed.
-
-**Implementation target:** v0.8.0 (Solidity `challenge()` modifier)
+**Open question:** Minimum threshold — is 1 correct resolved stake enough? Start at 1 (low friction), raise if farming is observed.
 
 ---
 
@@ -214,9 +223,9 @@ function challenge(uint256 claimId, bytes calldata proof)
 | Fast/slow path API | Low | High | V2.0 ✅ |
 | Accuracy vs choice separation | Medium | High | V2.0 ✅ |
 | Stake floor by counterparty tier | Medium | Medium | V2.1 ✅ |
-| Dynamic challenge repricing | High | Medium | V2.1 |
-| Watchtower contract | High | High | V2.2 |
-| Prior-stake challenger requirement | Low | Critical | V2.2 |
+| Prior-stake challenger guard | Low | Critical | **V2.2 ✅** |
+| Dynamic challenge repricing | High | Medium | V2.3 |
+| Watchtower contract | High | High | V2.3 |
 
 ---
 
