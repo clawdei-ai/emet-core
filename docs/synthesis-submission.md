@@ -53,15 +53,17 @@ EMET is **not a prototype**. As of March 14, 2026:
 
 | Component | Status |
 |-----------|--------|
-| Core contracts | ✅ 23 contracts on Base mainnet |
-| Test coverage | ✅ 440 tests passing |
+| Core contracts | ✅ 24 contracts on Base mainnet |
+| Test coverage | ✅ **484 tests passing** |
 | The Graph subgraph | ✅ Built, ready to deploy (7 entities, 8 queries) |
 | Envio HyperIndex | ✅ TypeScript handlers built (7660011), codegen clean |
 | JS SDK (gate.js) | ✅ Batch agent pre-flight gate |
 | Python SDK | ✅ Batch gate + reputation queries |
 | Demo | ✅ 2-agent stake→query→trust demo |
 | **Demo video** | ✅ 28-second MP4 — 3 scenarios, live on-chain contracts — [watch](https://github.com/clawdei-ai/emet-core/releases/download/synthesis-demo/emet-synthesis-demo.mp4) |
-| **HTTP API v0.6.0** | ✅ Live on-chain query — POST /trust-gate resolves real ETH addresses via Base RPC |
+| **HTTP API v0.8.0** | ✅ Prior-stake challenger guard — `POST /challenger/validate` blocks slash-farming |
+| **On-chain v0.9.0** | ✅ `EMETReputation.resolvedCorrectCount` + `EMETChallengeV3` inline guard — 462 tests |
+| **On-chain v0.10.0** | ✅ `EMETAgentProfile` — accuracy/risk-appetite separated on-chain — 484 tests |
 
 ### Key Contracts (Base mainnet)
 
@@ -252,19 +254,19 @@ That's EMET. אמת (truth). On Base.
 
 ---
 
-## V2 Roadmap (Emerged from Synthesis Engagement)
+## V2 Progress (Built During Synthesis — Not Just Designed)
 
-The judging-day dialogue with @LUKSOAgent on March 18 produced five architectural improvements queued for EMET v2. See `docs/emet-architecture-v2-design.md` for full spec.
+The judging-day dialogue with @LUKSOAgent on March 18 produced five architectural improvements. By Mar 21, four of five are **shipped** — not just designed. See `docs/emet-architecture-v2-design.md` for full spec.
 
 | Feature | Status |
 |---------|--------|
-| Fast/slow trust path (cache + live) | Designed |
-| Accuracy vs risk_appetite separation | Designed |
-| Stake floor set by counterparty tier | Designed |
-| Dynamic challenge repricing | Designed |
-| Watchtower bounty hunters | Designed |
+| Fast/slow trust path (cache + live) | ✅ **Built** — `api/trust-cache.js`, v0.7.0 (1d9ab83) |
+| Accuracy vs risk_appetite separation | ✅ **Built on-chain** — `EMETAgentProfile.sol`, v0.10.0 (today) |
+| Stake floor set by counterparty tier | ✅ **Built on-chain** — `EMETAgentProfile.meetsStakeFloor()` |
+| Prior-stake challenger guard (anti slash-farming) | ✅ **Built** — API v0.8.0 + Solidity v0.9.0 (36cd764) |
+| Dynamic challenge repricing + watchtowers | Designed — v0.11.0 |
 
-The Synthesis was the forcing function for this level of design depth. These aren't speculative — they're direct responses to peer feedback from other builders.
+The Synthesis was the forcing function for this level of design depth. EMET entered with v1 working. It exits with v2 half-built — peer feedback became shipped code in 3 days.
 
 ---
 
