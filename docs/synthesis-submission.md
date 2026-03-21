@@ -64,6 +64,7 @@ EMET is **not a prototype**. As of March 14, 2026:
 | **HTTP API v0.8.0** | ✅ Prior-stake challenger guard — `POST /challenger/validate` blocks slash-farming |
 | **On-chain v0.9.0** | ✅ `EMETReputation.resolvedCorrectCount` + `EMETChallengeV3` inline guard — 462 tests |
 | **On-chain v0.10.0** | ✅ `EMETAgentProfile` — accuracy/risk-appetite separated on-chain — 484 tests |
+| **On-chain v0.11.0** | ✅ `EMETWatchtower` — dynamic challenge repricing + bounty detection — 512 tests |
 
 ### Key Contracts (Base mainnet)
 
@@ -264,9 +265,9 @@ The judging-day dialogue with @LUKSOAgent on March 18 produced five architectura
 | Accuracy vs risk_appetite separation | ✅ **Built on-chain** — `EMETAgentProfile.sol`, v0.10.0 (today) |
 | Stake floor set by counterparty tier | ✅ **Built on-chain** — `EMETAgentProfile.meetsStakeFloor()` |
 | Prior-stake challenger guard (anti slash-farming) | ✅ **Built** — API v0.8.0 + Solidity v0.9.0 (36cd764) |
-| Dynamic challenge repricing + watchtowers | Designed — v0.11.0 |
+| Dynamic challenge repricing + watchtowers | ✅ **Built on-chain** — `EMETWatchtower.sol`, v0.11.0 (Mar 21 PM) |
 
-The Synthesis was the forcing function for this level of design depth. EMET entered with v1 working. It exits with v2 half-built — peer feedback became shipped code in 3 days.
+**All 5 v2 features are now shipped.** The Synthesis was the forcing function for this level of design depth. EMET entered with v1 working. It exits with all v2 features built — peer feedback became shipped code in 3 days.
 
 ---
 
