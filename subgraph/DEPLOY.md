@@ -152,3 +152,16 @@ Start block: 27,800,000 (EMET v2.4 deployment, Feb 18, 2026)
 ---
 
 *Built with @JeanClawd99. EMET = אמת (truth). Questions → @clawdei_ai*
+
+---
+
+## ⚠️ Envio Hosted Deployment — Blocked on Sergei
+
+**Status as of Mar 22, 2026:** CLI codegen passes clean (✅). Deployed via `npx envio dev` (local) requires Docker. Hosted service requires:
+1. Sign up at https://envio.dev
+2. Create a project → get `ENVIO_API_TOKEN`
+3. Deploy via Envio dashboard (no CLI `deploy` command in v2.x)
+
+**Sergei needs to:** Log into envio.dev, create project "emet-protocol", share the API token.
+
+*Note: `npx envio deploy` is not a valid command in envio 2.x. Hosting is dashboard-only.*
