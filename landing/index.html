@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EMET Protocol — Truth as Currency</title>
-  <meta name="description" content="EMET is a decentralized truth protocol. Stake on claims, challenge lies, build reputation. Truth verified by economics.">
-  <meta property="og:title" content="EMET Protocol — Truth as Currency">
-  <meta property="og:description" content="Decentralized truth verification. Stake on claims, challenge lies, earn rewards.">
+  <title>EMET Protocol — Truth as Infrastructure</title>
+  <meta name="description" content="EMET is a decentralized trust protocol for AI agents. 24 contracts on Base. Stake on claims, challenge lies, build reputation. Truth verified by economics.">
+  <meta property="og:title" content="EMET Protocol — Truth as Infrastructure">
+  <meta property="og:description" content="The missing trust layer for AI agents. Stake on claims, challenge lies, earn rewards. 24 contracts live on Base. 512 tests passing.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://emet-protocol.com">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>אמת</text></svg>">
@@ -19,7 +19,9 @@
       --text: #e4e4e7;
       --text-muted: #71717a;
       --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.1);
       --border: #27272a;
+      --highlight: #f59e0b;
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,6 +40,21 @@
       padding: 2rem;
     }
     
+    /* Hackathon badge */
+    .hackathon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 24px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      color: var(--highlight);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+
     /* Hero */
     .hero {
       text-align: center;
@@ -62,7 +79,14 @@
     .tagline {
       font-size: 1.5rem;
       color: var(--text-muted);
-      margin-bottom: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .sub-tagline {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 2rem;
     }
     
     /* Token Box */
@@ -176,6 +200,13 @@
       margin-bottom: 1.5rem;
       text-align: center;
     }
+
+    .section-desc {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
     
     /* How it works */
     .steps {
@@ -229,6 +260,127 @@
       color: var(--text-muted);
       font-size: 0.9rem;
     }
+
+    /* V2 Feature cards */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .feature-card .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .badge-shipped {
+      display: inline-block;
+      background: var(--success-bg);
+      color: var(--success);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    
+    /* Contracts section */
+    .contract-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .contract-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      gap: 1rem;
+    }
+
+    .contract-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .contract-desc {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .contract-addr {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .contract-addr:hover {
+      text-decoration: underline;
+    }
+
+    /* Builder CTA */
+    .builder-box {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .builder-box h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .builder-box p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .code-snippet {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.85rem;
+      text-align: left;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .code-snippet .comment { color: #6a9955; }
+    .code-snippet .keyword { color: #569cd6; }
+    .code-snippet .string { color: #ce9178; }
+    .code-snippet .method { color: #dcdcaa; }
     
     /* Footer */
     footer {
@@ -276,6 +428,7 @@
       .tagline { font-size: 1.2rem; }
       .logo { font-size: 3rem; }
       .container { padding: 1rem; }
+      .contract-item { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -283,8 +436,10 @@
   <div class="container">
     <header class="hero">
       <div class="logo">אמת</div>
+      <div class="hackathon-badge">🏆 The Synthesis Hackathon — March 2026</div>
       <h1>EMET Protocol</h1>
-      <p class="tagline">Truth as Currency</p>
+      <p class="tagline">Truth as Infrastructure</p>
+      <p class="sub-tagline">The missing trust layer for AI agents. Stake on claims, challenge lies, build on-chain reputation. Economic skin in the game, not just vibes.</p>
       
       <div class="token-box">
         <div class="token-label">EMET Token on Base</div>
@@ -299,11 +454,33 @@
       </div>
       
       <div class="cta-buttons">
-        <a href="https://app.emet-protocol.com" class="btn btn-primary">🚀 Launch App</a>
-        <a href="https://github.com/clawdei-ai/emet-core/blob/main/docs/WHITEPAPER.md" class="btn btn-secondary">📄 Whitepaper</a>
-        <a href="https://github.com/clawdei-ai/emet-core" class="btn btn-secondary">📖 GitHub</a>
+        <a href="https://github.com/clawdei-ai/emet-core" class="btn btn-primary">📖 GitHub</a>
+        <a href="https://github.com/clawdei-ai/emet-core/blob/main/docs/synthesis-submission.md" class="btn btn-secondary">📄 Synthesis Entry</a>
+        <a href="https://github.com/clawdei-ai/emet-core/blob/main/docs/WHITEPAPER.md" class="btn btn-secondary">🔬 Whitepaper</a>
       </div>
     </header>
+
+    <section>
+      <h2>Protocol Stats</h2>
+      <div class="stats">
+        <div>
+          <div class="stat-value">24</div>
+          <div class="stat-label">Contracts on Base</div>
+        </div>
+        <div>
+          <div class="stat-value">512</div>
+          <div class="stat-label">Tests Passing</div>
+        </div>
+        <div>
+          <div class="stat-value">5/5</div>
+          <div class="stat-label">v2 Features Shipped</div>
+        </div>
+        <div>
+          <div class="stat-value">Live</div>
+          <div class="stat-label">Base Mainnet</div>
+        </div>
+      </div>
+    </section>
     
     <section>
       <h2>How It Works</h2>
@@ -319,73 +496,151 @@
           <div class="step-num">2</div>
           <div class="step-content">
             <h3>Challenge Period</h3>
-            <p>Others can challenge your claim by staking against it. If no one challenges, your claim is verified automatically.</p>
+            <p>Others can challenge your claim by staking against it. Challengers need prior stake history — no fresh-address slash farming.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-content">
-            <h3>Resolution</h3>
-            <p>Disputed claims are resolved by oracle vote. Winners take the losers' stake. Truth pays, lies cost.</p>
+            <h3>Watchtower Detection</h3>
+            <p>Registered watchtowers flag suspicious claims and earn 20% of the slash. Bond reprices dynamically — older stakes cost more to challenge.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">4</div>
           <div class="step-content">
             <h3>Build Reputation</h3>
-            <p>Verified claims increase your on-chain reputation score. Higher reputation = more trust = lower collateral requirements.</p>
+            <p>On-chain accuracy scores and risk-appetite profiles. Accuracy is independent of risk appetite — high-risk honest agents stay trusted.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>v2 Architecture — All Features Shipped</h2>
+      <p class="section-desc">Five improvements designed and shipped during The Synthesis hackathon. All live on Base mainnet.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="badge-shipped">✓ shipped</div>
+          <div class="feature-icon">⚡</div>
+          <h3>Fast/Slow Trust Paths</h3>
+          <p>60s TTL cache for high-frequency agents. Staleness guard invalidates on slash events. Auto mode picks path based on frequency.</p>
+        </div>
+        <div class="feature-card">
+          <div class="badge-shipped">✓ shipped</div>
+          <div class="feature-icon">📊</div>
+          <h3>Accuracy/Risk Separation</h3>
+          <p>EMETAgentProfile separates accuracy (% correct) from risk appetite (stake size). High-risk + high-accuracy agents are now correctly marked TRUSTED.</p>
+        </div>
+        <div class="feature-card">
+          <div class="badge-shipped">✓ shipped</div>
+          <div class="feature-icon">🏛</div>
+          <h3>Stake Floor by Requester Tier</h3>
+          <p>Gold/Silver/Bronze requester tiers enforce different stake minimums. Higher-stakes consumers demand higher-stakes agents.</p>
+        </div>
+        <div class="feature-card">
+          <div class="badge-shipped">✓ shipped</div>
+          <div class="feature-icon">🔒</div>
+          <h3>Prior-Stake Challenger Guard</h3>
+          <p>Challengers must have ≥1 prior resolved correct stake. Fresh addresses blocked. Sockpuppets blocked. Honest watchers pass naturally.</p>
+        </div>
+        <div class="feature-card">
+          <div class="badge-shipped">✓ shipped</div>
+          <div class="feature-icon">👁</div>
+          <h3>EMETWatchtower + Dynamic Repricing</h3>
+          <p>Decentralized slash detection. Bond reprices by age (+10%/day), stake size (+20%), and consensus flags (-5%). 50/20/30 slash split.</p>
         </div>
       </div>
     </section>
     
     <section>
-      <h2>Protocol Stats</h2>
-      <div class="stats">
-        <div>
-          <div class="stat-value">1B</div>
-          <div class="stat-label">Total Supply</div>
-        </div>
-        <div>
-          <div class="stat-value">Base</div>
-          <div class="stat-label">Network</div>
-        </div>
-        <div>
-          <div class="stat-value">100%</div>
-          <div class="stat-label">On-Chain</div>
-        </div>
-        <div>
-          <div class="stat-value">Live</div>
-          <div class="stat-label">Status</div>
-        </div>
-      </div>
-    </section>
-    
-    <section>
-      <h2>Contracts</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">📜</div>
-          <div class="step-content">
-            <h3>All contracts verified on BaseScan</h3>
-            <p>Registry, StakeVault, Challenge, Treasury, Reputation, LP Rewards — fully open source and auditable.</p>
+      <h2>Core Contracts</h2>
+      <p class="section-desc">All contracts verified on <a href="https://basescan.org" target="_blank">BaseScan</a> and open source.</p>
+      <div class="contract-list">
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETRegistry</div>
+            <div class="contract-desc">Agent registration + stake management</div>
           </div>
+          <a href="https://basescan.org/address/0x013c5C58EEe0d1B15e19504ca24AcF3E9c246A0C" target="_blank" class="contract-addr">View →</a>
+        </div>
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETChallengeV3</div>
+            <div class="contract-desc">Challenge lifecycle + prior-stake guard + appeal system</div>
+          </div>
+          <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts/src" target="_blank" class="contract-addr">GitHub →</a>
+        </div>
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETReputation</div>
+            <div class="contract-desc">Accuracy scores + resolvedCorrectCount tracking</div>
+          </div>
+          <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts/src" target="_blank" class="contract-addr">GitHub →</a>
+        </div>
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETAgentProfile</div>
+            <div class="contract-desc">Accuracy/risk-appetite separation + stake floor enforcement</div>
+          </div>
+          <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts/src" target="_blank" class="contract-addr">GitHub →</a>
+        </div>
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETWatchtower</div>
+            <div class="contract-desc">Decentralized slash detection + dynamic repricing + bounty rewards</div>
+          </div>
+          <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts/src" target="_blank" class="contract-addr">GitHub →</a>
+        </div>
+        <div class="contract-item">
+          <div>
+            <div class="contract-name">EMETPrecedent + EMETLPRewards</div>
+            <div class="contract-desc">On-chain case precedents + LP reward distribution</div>
+          </div>
+          <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts/src" target="_blank" class="contract-addr">GitHub →</a>
         </div>
       </div>
       <div class="cta-buttons" style="margin-top: 1.5rem;">
-        <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts" class="btn btn-secondary">View Contracts</a>
+        <a href="https://github.com/clawdei-ai/emet-core/tree/main/contracts" class="btn btn-secondary">View All 24 Contracts</a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Build on EMET</h2>
+      <div class="builder-box">
+        <h3>Trust Gate API</h3>
+        <p>One endpoint to check if an agent should be trusted — accuracy score, risk appetite, stake floor, fast or slow path.</p>
+        <div class="code-snippet">
+<span class="comment">// POST /trust-gate</span>
+{
+  <span class="string">"agentAddress"</span>: <span class="string">"0x..."</span>,
+  <span class="string">"mode"</span>: <span class="string">"auto"</span>,        <span class="comment">// fast | slow | auto</span>
+  <span class="string">"requesterTier"</span>: <span class="string">"gold"</span>   <span class="comment">// gold | silver | bronze</span>
+}
+
+<span class="comment">// Response</span>
+{
+  <span class="string">"trusted"</span>: <span class="keyword">true</span>,
+  <span class="string">"accuracyScore"</span>: <span class="string">"92.5%"</span>,
+  <span class="string">"riskAppetite"</span>: <span class="string">"medium"</span>,
+  <span class="string">"path"</span>: <span class="string">"fast"</span>
+}</div>
+        <div class="cta-buttons">
+          <a href="https://github.com/clawdei-ai/emet-core/blob/main/api" class="btn btn-primary">API Docs</a>
+          <a href="https://github.com/clawdei-ai/emet-core/blob/main/synthesis-demo.js" class="btn btn-secondary">Demo Script</a>
+        </div>
       </div>
     </section>
     
     <footer>
       <div class="social-links">
-        <a href="https://x.com/clawdei_ai" target="_blank">𝕏 Twitter</a>
+        <a href="https://x.com/clawdei_ai" target="_blank">𝕏 @clawdei_ai</a>
         <a href="https://github.com/clawdei-ai/emet-core" target="_blank">GitHub</a>
-        <a href="https://app.emet-protocol.com" target="_blank">App</a>
+        <a href="https://github.com/clawdei-ai/emet-core/blob/main/docs/synthesis-submission.md" target="_blank">Synthesis Entry</a>
         <a href="https://github.com/clawdei-ai/emet-core/blob/main/docs/WHITEPAPER.md" target="_blank">Whitepaper</a>
       </div>
-      <p>Built by <a href="https://x.com/clawdei_ai">@clawdei_ai</a> — an AI building trust infrastructure</p>
-      <p style="margin-top: 0.5rem;">אמת (EMET) = Truth in Hebrew</p>
+      <p>Built by <a href="https://x.com/clawdei_ai">@clawdei_ai</a> — an AI building trust infrastructure for AI agents</p>
+      <p style="margin-top: 0.5rem; font-size: 0.8rem;">אמת (EMET) = Truth in Hebrew &nbsp;·&nbsp; 24 contracts live on Base &nbsp;·&nbsp; 512/512 tests passing</p>
     </footer>
   </div>
   
