@@ -30,7 +30,7 @@ contract EMETJuryTest is Test {
     address public claimSubmitter = address(10);
     address public challenger = address(11);
 
-    // Jurors (need 11 for Critical tier)
+    // Jurors (need 33 for Critical tier with CARTEL_RESISTANCE_FACTOR=3: 11*3=33)
     address public juror1 = address(100);
     address public juror2 = address(101);
     address public juror3 = address(102);
@@ -42,7 +42,28 @@ contract EMETJuryTest is Test {
     address public juror9 = address(108);
     address public juror10 = address(109);
     address public juror11 = address(110);
-    address public juror12 = address(111); // Extra for exclusion tests
+    address public juror12 = address(111);
+    address public juror13 = address(112);
+    address public juror14 = address(113);
+    address public juror15 = address(114);
+    address public juror16 = address(115);
+    address public juror17 = address(116);
+    address public juror18 = address(117);
+    address public juror19 = address(118);
+    address public juror20 = address(119);
+    address public juror21 = address(120);
+    address public juror22 = address(121);
+    address public juror23 = address(122);
+    address public juror24 = address(123);
+    address public juror25 = address(124);
+    address public juror26 = address(125);
+    address public juror27 = address(126);
+    address public juror28 = address(127);
+    address public juror29 = address(128);
+    address public juror30 = address(129);
+    address public juror31 = address(130);
+    address public juror32 = address(131);
+    address public juror33 = address(132);
 
     address[] public allJurors;
 
@@ -60,8 +81,8 @@ contract EMETJuryTest is Test {
         vm.etch(emetAddress, type(MockEMET).runtimeCode);
         mockToken = MockEMET(emetAddress);
 
-        // Setup juror array
-        allJurors = new address[](12);
+        // Setup juror array (33 jurors for Critical tier cartel resistance: 11*3=33)
+        allJurors = new address[](33);
         allJurors[0] = juror1;
         allJurors[1] = juror2;
         allJurors[2] = juror3;
@@ -74,6 +95,27 @@ contract EMETJuryTest is Test {
         allJurors[9] = juror10;
         allJurors[10] = juror11;
         allJurors[11] = juror12;
+        allJurors[12] = juror13;
+        allJurors[13] = juror14;
+        allJurors[14] = juror15;
+        allJurors[15] = juror16;
+        allJurors[16] = juror17;
+        allJurors[17] = juror18;
+        allJurors[18] = juror19;
+        allJurors[19] = juror20;
+        allJurors[20] = juror21;
+        allJurors[21] = juror22;
+        allJurors[22] = juror23;
+        allJurors[23] = juror24;
+        allJurors[24] = juror25;
+        allJurors[25] = juror26;
+        allJurors[26] = juror27;
+        allJurors[27] = juror28;
+        allJurors[28] = juror29;
+        allJurors[29] = juror30;
+        allJurors[30] = juror31;
+        allJurors[31] = juror32;
+        allJurors[32] = juror33;
 
         vm.startPrank(deployer);
 
@@ -232,7 +274,7 @@ contract EMETJuryTest is Test {
     // ============ Challenge Creation Tests ============
 
     function test_ChallengeCreation_MinorTier() public {
-        _registerJurors(3);
+        _registerJurors(9); // Minor tier: 3*CARTEL_RESISTANCE_FACTOR(3)=9
         uint256 claimId = _submitClaim();
 
         vm.prank(challenger);
@@ -267,7 +309,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_MajorTier() public {
-        _registerJurors(7);
+        _registerJurors(21); // Major tier: 7*CARTEL_RESISTANCE_FACTOR(3)=21
         uint256 claimId = _submitClaim();
 
         vm.prank(challenger);
@@ -285,7 +327,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_CriticalTier() public {
-        _registerJurors(11);
+        _registerJurors(33); // Critical tier: 11*CARTEL_RESISTANCE_FACTOR(3)=33
         uint256 claimId = _submitClaim();
 
         vm.prank(challenger);
@@ -303,7 +345,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_InsufficientStake() public {
-        _registerJurors(3);
+        _registerJurors(9); // Minor tier cartel-resistant pool
         uint256 claimId = _submitClaim();
 
         vm.expectRevert(
@@ -323,7 +365,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_CannotChallengeOwnClaim() public {
-        _registerJurors(3);
+        _registerJurors(9); // Minor tier cartel-resistant pool
         uint256 claimId = _submitClaim();
 
         vm.expectRevert(EMETChallengeV3.CannotChallengeOwnClaim.selector);
@@ -337,7 +379,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_DuplicateChallenge() public {
-        _registerJurors(3);
+        _registerJurors(9); // Minor tier cartel-resistant pool
         uint256 claimId = _submitClaim();
 
         vm.prank(challenger);
@@ -353,11 +395,25 @@ contract EMETJuryTest is Test {
     }
 
     function test_ChallengeCreation_InsufficientJurors() public {
-        _registerJurors(2); // Only 2, need 3 for Minor
+        _registerJurors(2); // Only 2, below the 9-juror cartel-resistant minimum for Minor
         uint256 claimId = _submitClaim();
 
+        // With CARTEL_RESISTANCE_FACTOR=3 and Minor jurySize=3, pool needs 9.
+        // With only 2, InsufficientJurors fires first (2 < 3).
         vm.expectRevert(
             abi.encodeWithSelector(EMETJuryPool.InsufficientJurors.selector, 2, 3)
+        );
+        vm.prank(challenger);
+        challengeV3.initiateChallenge(claimId, "ipfs://evidence", 10 ether, EMETChallengeV3.Tier.Minor);
+    }
+
+    function test_ChallengeCreation_InsufficientPoolForCartelResistance() public {
+        _registerJurors(5); // 5 >= 3 (jurySize), but 5 < 9 (3 * CARTEL_RESISTANCE_FACTOR)
+        uint256 claimId = _submitClaim();
+
+        // Pool meets minimum juror count but fails cartel-resistance check (need 9)
+        vm.expectRevert(
+            abi.encodeWithSelector(EMETJuryPool.InsufficientPoolForCartelResistance.selector, 5, 9)
         );
         vm.prank(challenger);
         challengeV3.initiateChallenge(claimId, "ipfs://evidence", 10 ether, EMETChallengeV3.Tier.Minor);
@@ -493,7 +549,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_Resolution_Tie_DefaultsToClaimUpheld() public {
-        _registerJurors(4); // 4 jurors for even split test
+        _registerJurors(9); // Minor tier cartel-resistant pool (3*3=9)
         uint256 claimId = _submitClaim();
 
         // Create challenge with 3 jurors (odd number, but we'll have 1-1 with abstain)
@@ -642,7 +698,7 @@ contract EMETJuryTest is Test {
     // ============ Appeal Tests ============
 
     function test_Appeal_MinorToMajor() public {
-        _registerJurors(11); // Need enough for Major tier
+        _registerJurors(21); // Major tier cartel-resistant pool (7*3=21)
 
         // Create and resolve Minor challenge
         uint256 claimId = _submitClaim();
@@ -684,7 +740,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_Appeal_MajorToCritical() public {
-        _registerJurors(11);
+        _registerJurors(33); // Critical tier cartel-resistant pool (11*3=33)
 
         uint256 claimId = _submitClaim();
 
@@ -726,7 +782,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_Appeal_CannotAppealCritical() public {
-        _registerJurors(11);
+        _registerJurors(33); // Critical tier cartel-resistant pool (11*3=33)
 
         uint256 claimId = _submitClaim();
 
@@ -759,7 +815,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_Appeal_InsufficientStake() public {
-        _registerJurors(11);
+        _registerJurors(33); // Critical tier cartel-resistant pool (11*3=33)
 
         uint256 claimId = _submitClaim();
 
@@ -806,7 +862,7 @@ contract EMETJuryTest is Test {
     }
 
     function test_Appeal_CannotDoubleAppeal() public {
-        _registerJurors(11);
+        _registerJurors(33); // Critical tier cartel-resistant pool (11*3=33)
 
         uint256 claimId = _submitClaim();
 
@@ -931,11 +987,19 @@ contract EMETJuryTest is Test {
 
     // ============ Helper Functions ============
 
+    /// @notice Register exactly `count` jurors from allJurors pool
     function _registerJurors(uint256 count) internal {
         for (uint256 i = 0; i < count && i < allJurors.length; i++) {
             vm.prank(allJurors[i]);
             juryPool.registerJuror();
         }
+    }
+
+    /// @notice Register the cartel-resistant minimum for a given jury size.
+    ///         Pool must have >= jurySize * CARTEL_RESISTANCE_FACTOR (3) jurors.
+    function _registerJurorsForJurySize(uint256 jurySize) internal {
+        uint256 minPool = jurySize * 3; // CARTEL_RESISTANCE_FACTOR = 3
+        _registerJurors(minPool);
     }
 
     function _submitClaim() internal returns (uint256 claimId) {
@@ -944,7 +1008,7 @@ contract EMETJuryTest is Test {
     }
 
     function _createChallengeWithJury() internal returns (uint256 challengeId, address[] memory jury) {
-        _registerJurors(5); // Register extra to account for exclusions
+        _registerJurors(9); // Minor tier cartel-resistant pool (3*3=9)
         uint256 claimId = _submitClaim();
 
         vm.prank(challenger);

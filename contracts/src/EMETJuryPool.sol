@@ -8,12 +8,22 @@ import {EMETReputation} from "./EMETReputation.sol";
 /// @notice Manages the pool of eligible jurors for EMET dispute resolution.
 ///         Jurors must have reputation >= MIN_JUROR_REP to register.
 ///         Selection is weighted by reputation (higher rep = higher chance).
+///         Cartel resistance: pool must have >= jurySize * CARTEL_RESISTANCE_FACTOR
+///         eligible jurors before selection is allowed, making cartel majority
+///         control require owning a large fraction of all registered jurors.
 /// @dev Uses block.prevrandao + challengeId for entropy. No admin functions.
 contract EMETJuryPool is IJuryPool {
     // ============ Constants ============
 
     /// @notice Minimum reputation required to register as a juror
     int256 public constant MIN_JUROR_REP = 50;
+
+    /// @notice Cartel resistance multiplier: pool must have >= jurySize * factor eligible jurors.
+    ///         With factor=3 and jurySize=7, a cartel controlling 4/7 seats needs to own
+    ///         4 of 21 registered jurors (19%), making coordinated pool capture far more
+    ///         expensive than simply meeting the minimum pool requirement.
+    ///         Without this guard, a cartel needs only jurySize+1 jurors to guarantee majority.
+    uint256 public constant CARTEL_RESISTANCE_FACTOR = 3;
 
     // ============ Immutables ============
 
@@ -43,6 +53,7 @@ contract EMETJuryPool is IJuryPool {
     error AlreadyRegistered(address juror);
     error NotRegistered(address juror);
     error InsufficientJurors(uint256 available, uint256 required);
+    error InsufficientPoolForCartelResistance(uint256 eligible, uint256 required);
     error OnlyChallengeContract();
     error OnlyDeployer();
     error ChallengeContractAlreadySet();
@@ -122,6 +133,15 @@ contract EMETJuryPool is IJuryPool {
 
         if (eligible.length < jurySize) {
             revert InsufficientJurors(eligible.length, jurySize);
+        }
+
+        // Cartel resistance: require pool is large enough that no small cartel can
+        // reliably control majority of selected jurors. A pool of jurySize * CARTEL_RESISTANCE_FACTOR
+        // means controlling a 51% majority requires owning ~10% of the total eligible pool,
+        // making coordinated pool capture far more expensive.
+        uint256 minPoolForCartelResistance = jurySize * CARTEL_RESISTANCE_FACTOR;
+        if (eligible.length < minPoolForCartelResistance) {
+            revert InsufficientPoolForCartelResistance(eligible.length, minPoolForCartelResistance);
         }
 
         // Weighted random selection without replacement
