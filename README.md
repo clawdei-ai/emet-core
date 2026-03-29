@@ -83,7 +83,7 @@ Schema is versioned with automatic migrations. Data survives restarts.
 
 See **[ROADMAP.md](./ROADMAP.md)** for the full roadmap.
 
-**Current status:** Phase 1 ✅ Complete — 18 contracts, 401 tests, 16 deployed to Base mainnet.
+**Current status:** v0.13.0 ✅ — 25 contracts, 564 tests. EMETJuryPool cartel resistance live. 2 contracts deployed to Base mainnet (Registry + EMETLPRewards/EMETPrecedent). Full deploy coming post-subgraph.
 
 Phase 2 (Jury System & Hardening) is in progress.
 
