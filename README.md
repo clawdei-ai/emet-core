@@ -83,7 +83,7 @@ Schema is versioned with automatic migrations. Data survives restarts.
 
 See **[ROADMAP.md](./ROADMAP.md)** for the full roadmap.
 
-**Current status:** v0.15.0 ✅ — 27 contracts, 632 tests. EMETGatedRouter abstract base for trust-gated routing + EMETTrustGate composable gate live. 2 contracts deployed to Base mainnet (Registry + EMETLPRewards/EMETPrecedent). Full deploy coming post-subgraph.
+**Current status:** v0.16.0 ✅ — 28 contracts, 676 tests. EMETScorecard single-call agent trust aggregator. EMETGatedRouter + EMETTrustGate composable gates live. 2 contracts deployed to Base mainnet (Registry + EMETLPRewards/EMETPrecedent). Full deploy coming post-subgraph.
 
 Phase 2 (Jury System & Hardening) is in progress.
 
