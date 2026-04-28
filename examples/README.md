@@ -12,9 +12,10 @@ cd emet-core && docker compose up -d
 EMET_API=http://localhost:3141 node examples/tool-audit.js
 EMET_API=http://localhost:3141 node examples/multi-agent-consensus.js
 EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
+node examples/builder-trust-router.js
 ```
 
-No extra dependencies — uses Node 18+ native `fetch`.
+Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies.
 
 ---
 
@@ -67,6 +68,23 @@ EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
 - Reputation gate that allows, blocks, or falls back gracefully
 - Live leaderboard of most trusted agents
 - `curl` one-liners to check any agent's rep instantly
+
+---
+
+### [`builder-trust-router.js`](./builder-trust-router.js) — Builder Trust Router
+
+**Problem:** An agent marketplace or workflow runner needs to decide which agent can receive a task, money, or authority.  
+**Solution:** Pick an EMET policy from task risk, call the SDK's `evaluateBatch()`, then route only to agents that pass.
+
+```bash
+node examples/builder-trust-router.js
+```
+
+**What it shows:**
+- Risk-to-policy mapping: LENIENT for sandbox research, STANDARD for customer-facing tasks, STRICT for money movement
+- Batch evaluation of candidate agents through the SDK
+- A practical routing decision that logs the EMET result next to the assignment
+- Offline mocks so builders can run it before the builder stack is deployed
 
 ---
 
