@@ -22,6 +22,19 @@
  */
 
 export { EMETClient } from './client.js';
+export {
+  EMETTrust,
+  Policy,
+  PolicyName,
+  Tier,
+  TierName,
+  RiskAppetite,
+  RiskAppetiteName,
+  formatScore,
+  normalizePolicy,
+  normalizeScore,
+  normalizeTrustResult
+} from './trust.js';
 export { 
   ADDRESSES, 
   ABIS, 

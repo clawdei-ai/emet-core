@@ -1,6 +1,6 @@
 {
   "name": "emet-sdk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SDK and CLI for the EMET Protocol on Base",
   "type": "module",
   "main": "src/index.js",

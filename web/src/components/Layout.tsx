@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { path: '/submit', label: 'Submit Claim' },
   { path: '/claims', label: 'Claims' },
   { path: '/concentration', label: 'Concentration' },
+  { path: '/kya', label: 'KYA Stack' },
   { path: '/activity', label: 'My Activity' },
 ];
 

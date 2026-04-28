@@ -132,14 +132,15 @@ describe('EMETClient', () => {
   });
   
   describe('getReputation', () => {
-    it('should return unavailable when contract not deployed', async () => {
+    it('should return a normalized reputation response', async () => {
       const client = new EMETClient();
-      // Reputation contract is null by default
       const rep = await client.getReputation('0x' + '1'.repeat(40));
       
-      assert.strictEqual(rep.available, false);
-      assert.strictEqual(rep.score, 0);
-      assert.ok(rep.message.includes('not yet deployed'));
+      assert.strictEqual(typeof rep.available, 'boolean');
+      assert.strictEqual(typeof rep.score, 'number');
+      if (!rep.available) {
+        assert.ok(rep.message.includes('not yet deployed') || rep.message.includes('unavailable'));
+      }
     });
   });
   

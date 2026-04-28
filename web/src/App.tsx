@@ -10,6 +10,7 @@ import { ClaimsList } from './pages/ClaimsList';
 import { ClaimDetail } from './pages/ClaimDetail';
 import { MyActivity } from './pages/MyActivity';
 import { Concentration } from './pages/Concentration';
+import { KyaStack } from './pages/KyaStack';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/claims/:id" element={<ClaimDetail />} />
               <Route path="/activity" element={<MyActivity />} />
               <Route path="/concentration" element={<Concentration />} />
+              <Route path="/kya" element={<KyaStack />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -42,6 +42,12 @@ export const ADDRESSES = {
   
   // Bootstrap
   EMETBootstrap: '0xb2b908953f73006ad26a1ad212F740aB5Fe38BCa',
+
+  // Builder trust stack (deploy with contracts/script/DeployBuilderStack.s.sol)
+  // Not yet deployed on Base mainnet; provide addresses explicitly when available.
+  EMETAgentProfile: undefined,
+  EMETTrustGate: undefined,
+  EMETScorecard: undefined,
   
   // Legacy (deprecated - do not use)
   EMETRegistry_v1: '0x69FC0F525F15DFB57e762cD2c570114433AFc6e2',
@@ -197,6 +203,36 @@ export const ABIS = {
     'function hasClaimed(address account) view returns (bool)',
     'function boostrapAmount() view returns (uint256)',
     'function token() view returns (address)'
+  ],
+
+  // Builder trust stack ABIs
+  EMETAgentProfile: [
+    'function getProfile(address agent) view returns (tuple(uint256 totalClaims, uint256 correctClaims, uint256 slashCount, uint256 totalStakeWei, uint256 avgStakeWei, uint256 accuracyBps, uint8 riskAppetite))',
+    'function profiles(address agent) view returns (uint256 totalClaims, uint256 correctClaims, uint256 slashCount, uint256 totalStakeWei, uint256 avgStakeWei, uint256 accuracyBps, uint8 riskAppetite)',
+    'function setUpdater(address updater)',
+    'function updater() view returns (address)'
+  ],
+
+  EMETTrustGate: [
+    'function check(address agent, uint8 policy) returns (bool passes, string reason)',
+    'function query(address agent, uint8 policy) view returns (bool passes, string reason)',
+    'function checkCustom(address agent, tuple(uint256 minAccuracyBps, int256 minReputation, uint256 minClaims) cp) returns (bool passes, string reason)',
+    'function evaluate(address agent, uint8 policy) view returns (tuple(bool passes, uint256 accuracyBps, int256 reputation, uint256 totalClaims, string reason))',
+    'function evaluateBatch(address[] agents, uint8 policy) view returns (tuple(bool passes, uint256 accuracyBps, int256 reputation, uint256 totalClaims, string reason)[])',
+    'function filter(address[] agents, uint8 policy) view returns (address[] qualified)',
+    'function agentProfile() view returns (address)',
+    'function reputation() view returns (address)'
+  ],
+
+  EMETScorecard: [
+    'function score(address agent) returns (tuple(bool passesLenient, bool passesStandard, bool passesStrict, uint256 accuracyBps, uint256 totalClaims, uint256 correctClaims, uint256 slashCount, uint256 avgStakeWei, uint8 riskAppetite, int256 reputation, uint8 tier, uint256 trustScore))',
+    'function peek(address agent) view returns (tuple(bool passesLenient, bool passesStandard, bool passesStrict, uint256 accuracyBps, uint256 totalClaims, uint256 correctClaims, uint256 slashCount, uint256 avgStakeWei, uint8 riskAppetite, int256 reputation, uint8 tier, uint256 trustScore))',
+    'function tierOf(address agent) view returns (uint8)',
+    'function trustScoreOf(address agent) view returns (uint256)',
+    'function check(address agent, uint8 policy) view returns (bool passes, string reason)',
+    'function agentProfile() view returns (address)',
+    'function reputation() view returns (address)',
+    'function trustGate() view returns (address)'
   ]
 };
 

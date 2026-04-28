@@ -16,6 +16,9 @@ This directory contains comprehensive documentation for the EMET protocol.
 ## Quick Links
 
 - [Protocol Design Document](../../memory/emet-protocol.md) — Original design doc
+- [EMET × KYA Stack](./EMET-KYA-STACK.md) — Identity layer vs output-accountability layer
+- [Builder Trust Quickstart](./BUILDER-TRUST-QUICKSTART.md) — SDK + Solidity examples for TrustGate/Scorecard routing
+- [SDK v1.1.0 Unblock Note](./SDK-V1.1.0-UNBLOCK.md) — exact trust-module restore/rebuild checklist
 - [First Signed Claim](https://x.com/mark_k/status/2017538408336212117) — Origin thread
 
 ## Contributing
