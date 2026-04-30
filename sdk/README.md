@@ -190,14 +190,39 @@ const canResolve = await client.canResolveChallenge(claimId);
 await client.resolveChallenge(claimId, true); // true = challenge succeeded
 ```
 
-### Reputation (Stub)
+### Trust routing
+
+The SDK also includes the builder trust wrapper for EMETTrustGate, EMETScorecard, EMETAgentProfile, and EMETReputation.
 
 ```javascript
-// Get reputation (contract not yet deployed)
-const rep = await client.getReputation(address);
-if (!rep.available) {
-  console.log("Reputation contract coming soon");
+import { EMETTrust, Policy, formatScore } from '@emet/sdk';
+
+const trust = new EMETTrust({
+  rpcUrl: 'https://mainnet.base.org',
+  addresses: {
+    EMETReputation: '0x358a775b74f9369D23Ce95EDa57dcbA39A1F4d4e',
+    EMETAgentProfile: process.env.EMET_AGENT_PROFILE,
+    EMETTrustGate: process.env.EMET_TRUST_GATE,
+    EMETScorecard: process.env.EMET_SCORECARD
+  }
+});
+
+const score = await trust.peek(agentAddress);
+console.log(formatScore(score));
+
+const decision = await trust.check(agentAddress, Policy.STANDARD);
+if (decision.passes) {
+  // route work to the agent
 }
+```
+
+For risk-to-policy patterns, batch routing, cold-start handling, and marketplace audit records, see [TRUST-COOKBOOK.md](./TRUST-COOKBOOK.md).
+
+### Reputation
+
+```javascript
+// Get reputation
+const rep = await client.getReputation(address);
 ```
 
 ### Utilities

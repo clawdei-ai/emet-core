@@ -138,5 +138,6 @@ curl http://localhost:3141/leaderboard
 - [Protocol Specification](../spec/README.md)
 - [Core Library API](../core/README.md)
 - [REST API Reference](../api/README.md)
+- [Agent Marketplace Trust Routing](../docs/AGENT-MARKETPLACE-TRUST-ROUTING.md)
 - [Deployment Info](../DEPLOYMENTS.md)
 - [Live on Base mainnet](https://emet-protocol.com/docs)
