@@ -84,6 +84,8 @@ The clean split is:
 
 > KYA controls admission. EMET controls consequence-aware routing.
 
+For a concrete KYA-OS adapter boundary, see [`KYA-OS-EMET-POLICY-ADAPTER.md`](./KYA-OS-EMET-POLICY-ADAPTER.md).
+
 ## Runnable example
 
 See [`examples/builder-trust-router.js`](../examples/builder-trust-router.js).
@@ -99,6 +101,12 @@ Run it locally:
 
 ```bash
 node examples/builder-trust-router.js
+```
+
+For identity + delegated-scope routing, also see [`examples/kya-os-policy-adapter.js`](../examples/kya-os-policy-adapter.js):
+
+```bash
+node examples/kya-os-policy-adapter.js
 ```
 
 ## Integration target

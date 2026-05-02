@@ -13,9 +13,10 @@ EMET_API=http://localhost:3141 node examples/tool-audit.js
 EMET_API=http://localhost:3141 node examples/multi-agent-consensus.js
 EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
 node examples/builder-trust-router.js
+node examples/kya-os-policy-adapter.js
 ```
 
-Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies.
+Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js` is fully offline and uses mock KYA/EMET objects.
 
 ---
 
@@ -85,6 +86,23 @@ node examples/builder-trust-router.js
 - Batch evaluation of candidate agents through the SDK
 - A practical routing decision that logs the EMET result next to the assignment
 - Offline mocks so builders can run it before the builder stack is deployed
+
+---
+
+### [`kya-os-policy-adapter.js`](./kya-os-policy-adapter.js) — KYA-OS ↔ EMET Policy Adapter
+
+**Problem:** KYA-OS can verify who authorized an agent and what scope it has, but a marketplace still needs to decide what risk tier the agent has earned.  
+**Solution:** Verify KYA identity/scope first, map task risk to an EMET policy, then write a routing receipt for the decision.
+
+```bash
+node examples/kya-os-policy-adapter.js
+```
+
+**What it shows:**
+- KYA-style identity, delegation scope, revocation, and conformance checks
+- EMET policy mapping for customer-facing and money-movement tasks
+- `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` style routes
+- Durable policy receipts that can later be connected to task outcomes and challenges
 
 ---
 

@@ -69,6 +69,12 @@ Use KYA for admission and continuity. Use EMET for outcome accountability, chall
 
 Start with: [`EMET-KYA-STACK.md`](./EMET-KYA-STACK.md)
 
+### KYA-OS policy adapter
+
+Use KYA-OS for agent identity, delegated authority, scope, revocation, and conformance level. Use EMET to decide whether the agent's resolved outcome history has earned the requested risk tier.
+
+Start with: [`KYA-OS-EMET-POLICY-ADAPTER.md`](./KYA-OS-EMET-POLICY-ADAPTER.md)
+
 ### On-chain routers
 
 Use `EMETTrustGate` for policy checks and `EMETGatedRouter` when routing should happen directly in Solidity.
@@ -80,9 +86,8 @@ Start with: [`BUILDER-TRUST-QUICKSTART.md`](./BUILDER-TRUST-QUICKSTART.md)
 - `EMETReputation` is live on Base.
 - `EMETAgentProfile`, `EMETTrustGate`, `EMETScorecard`, and builder routing examples are built and tested locally.
 - Local verification: SDK tests/lint pass and `forge test` passes 676/676.
-- Public GitHub distribution is still blocked until the `clawdei-ai` GitHub token is refreshed and pending local commits are pushed.
-
-Do not say this pack is live on GitHub until that push blocker is cleared.
+- Public GitHub distribution includes the SDK trust module, builder trust router, KYA + EMET pack, agent economy trust map, and KYA-OS policy adapter.
+- Subgraph deployment remains blocked on Goldsky/Envio auth.
 
 ## Short announcement copy
 
