@@ -14,6 +14,7 @@ EMET_API=http://localhost:3141 node examples/multi-agent-consensus.js
 EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
 node examples/builder-trust-router.js
 node examples/kya-os-policy-adapter.js
+node examples/erc8004-routing-receipt.js
 ```
 
 Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js` is fully offline and uses mock KYA/EMET objects.
@@ -103,6 +104,23 @@ node examples/kya-os-policy-adapter.js
 - EMET policy mapping for customer-facing and money-movement tasks
 - `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` style routes
 - Durable policy receipts that can later be connected to task outcomes and challenges
+
+---
+
+### [`erc8004-routing-receipt.js`](./erc8004-routing-receipt.js) — ERC-8004 × EMET Routing Receipts
+
+**Problem:** ERC-8004 can anchor agent identity/reputation/validation, but an app still needs to decide whether a specific agent can receive a specific risky task.  
+**Solution:** Resolve identity, map task risk to an EMET policy, evaluate outcome history, and persist a routing receipt before assignment.
+
+```bash
+node examples/erc8004-routing-receipt.js
+```
+
+**What it shows:**
+- Active/inactive ERC-8004-style identity checks
+- Risk-tier policy mapping for customer-facing, money-movement, and governance tasks
+- `allow`, `human_review`, `challenge_first`, and `block` routing decisions
+- Receipts that preserve identity, task risk, trust inputs, decision reason, and assignment state
 
 ---
 
