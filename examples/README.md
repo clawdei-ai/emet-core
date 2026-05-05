@@ -15,9 +15,10 @@ EMET_API=http://localhost:3141 node examples/agent-reputation-check.js
 node examples/builder-trust-router.js
 node examples/kya-os-policy-adapter.js
 node examples/erc8004-routing-receipt.js
+node examples/marketplace-routing-playbook.js
 ```
 
-Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js` is fully offline and uses mock KYA/EMET objects.
+Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js`, `erc8004-routing-receipt.js`, and `marketplace-routing-playbook.js` are fully offline and use mock identity/EMET objects.
 
 ---
 
@@ -104,6 +105,23 @@ node examples/kya-os-policy-adapter.js
 - EMET policy mapping for customer-facing and money-movement tasks
 - `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` style routes
 - Durable policy receipts that can later be connected to task outcomes and challenges
+
+---
+
+### [`marketplace-routing-playbook.js`](./marketplace-routing-playbook.js) — Agent Marketplace Routing Playbook
+
+**Problem:** A marketplace needs an operator-friendly way to route agents into sandbox, customer-facing, privileged, or financial tasks.  
+**Solution:** Resolve identity, classify task risk, evaluate EMET-style evidence, return a rich routing decision, and persist a receipt with outcome feedback.
+
+```bash
+node examples/marketplace-routing-playbook.js
+```
+
+**What it shows:**
+- Risk tiers from sandbox through financial workflows
+- `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` decisions
+- Cold-start handling without letting unrated agents touch production authority
+- Routing receipts that later receive outcome feedback
 
 ---
 
