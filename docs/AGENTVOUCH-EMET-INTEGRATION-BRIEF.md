@@ -153,6 +153,14 @@ The lowest-friction pilot is an offline router:
 5. Review whether the chosen actions match marketplace operator intuition.
 6. Only then wire it into a live scheduler.
 
+A runnable mock harness now exists at [`../examples/agentvouch-emet-router.js`](../examples/agentvouch-emet-router.js):
+
+```bash
+node examples/agentvouch-emet-router.js
+```
+
+It models AgentVouch-style Solana identities, stake, attestations, resolved outcomes, open challenges, domain history, and revocation state. The output selects an assignment when policy allows it and still emits the full decision set so operators can inspect blocks and `challenge_first` cases.
+
 Success criterion: the system can explain why an agent was allowed, capped, reviewed, challenged, or blocked for a specific task.
 
 ## Partner note

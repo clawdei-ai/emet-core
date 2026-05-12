@@ -16,9 +16,10 @@ node examples/builder-trust-router.js
 node examples/kya-os-policy-adapter.js
 node examples/erc8004-routing-receipt.js
 node examples/marketplace-routing-playbook.js
+node examples/agentvouch-emet-router.js
 ```
 
-Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js`, `erc8004-routing-receipt.js`, and `marketplace-routing-playbook.js` are fully offline and use mock identity/EMET objects.
+Most examples use Node 18+ native `fetch`. `builder-trust-router.js` imports the local SDK and uses its existing dependencies. `kya-os-policy-adapter.js`, `erc8004-routing-receipt.js`, `marketplace-routing-playbook.js`, and `agentvouch-emet-router.js` are fully offline and use mock identity/EMET objects.
 
 ---
 
@@ -122,6 +123,23 @@ node examples/marketplace-routing-playbook.js
 - `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` decisions
 - Cold-start handling without letting unrated agents touch production authority
 - Routing receipts that later receive outcome feedback
+
+---
+
+### [`agentvouch-emet-router.js`](./agentvouch-emet-router.js) — AgentVouch × EMET Offline Router
+
+**Problem:** An on-chain agent reputation registry is useful, but an app still needs task-specific assignment decisions.  
+**Solution:** Convert AgentVouch-style identity, stake, attestations, outcomes, disputes, and domain history into EMET routing receipts.
+
+```bash
+node examples/agentvouch-emet-router.js
+```
+
+**What it shows:**
+- AgentVouch-style Solana identity and reputation evidence as routing inputs
+- Task-specific policies for sandbox, customer-facing, privileged, and financial work
+- `allow`, `allow_with_cap`, `human_review`, `challenge_first`, and `block` decisions
+- A pilot harness builders can run before wiring a live registry/API
 
 ---
 
