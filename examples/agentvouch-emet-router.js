@@ -148,17 +148,36 @@ function routeTask(task) {
   return { task, selected, receipts };
 }
 
-for (const task of tasks) {
-  const { selected, receipts } = routeTask(task);
-  console.log(`\n${task.id} (${task.riskTier})`);
-  if (!selected) {
-    console.log('selected: none');
-    continue;
+function runDemo() {
+  for (const task of tasks) {
+    const { selected, receipts } = routeTask(task);
+    console.log(`\n${task.id} (${task.riskTier})`);
+    if (!selected) {
+      console.log('selected: none');
+      continue;
+    }
+    console.log(`selected: ${selected.agentId}`);
+    console.log(`decision: ${selected.decision.action} — ${selected.decision.reason}`);
+    console.log(`receipt: ${selected.receiptId}`);
+    console.log(`all decisions: ${receipts.map((r) => `${r.agentId.split(':').pop()}=${r.decision.action}`).join(', ')}`);
   }
-  console.log(`selected: ${selected.agentId}`);
-  console.log(`decision: ${selected.decision.action} — ${selected.decision.reason}`);
-  console.log(`receipt: ${selected.receiptId}`);
-  console.log(`all decisions: ${receipts.map((r) => `${r.agentId.split(':').pop()}=${r.decision.action}`).join(', ')}`);
+
+  console.log('\nPilot rule: persist all receipts, including blocks and challenge_first decisions, then append outcomes after task resolution.');
 }
 
-console.log('\nPilot rule: persist all receipts, including blocks and challenge_first decisions, then append outcomes after task resolution.');
+if (require.main === module) {
+  runDemo();
+}
+
+module.exports = {
+  agentVouchProfiles,
+  tasks,
+  policies,
+  evidenceSnapshot,
+  evaluate,
+  decide,
+  makeReceipt,
+  routeTask,
+  score,
+  runDemo,
+};
