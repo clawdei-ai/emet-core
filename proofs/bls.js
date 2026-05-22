@@ -21,7 +21,18 @@
  * @version 0.2.0
  */
 
-const bls = require('@noble/bls12-381');
+function requireNobleBls() {
+  try {
+    return require('@noble/bls12-381');
+  } catch (error) {
+    if (error && error.code !== 'MODULE_NOT_FOUND') {
+      throw error;
+    }
+    return require(require.resolve('@noble/bls12-381', { paths: [require('path').join(__dirname, '../core')] }));
+  }
+}
+
+const bls = requireNobleBls();
 
 // ---------------------------------------------------------------------------
 // Key generation
