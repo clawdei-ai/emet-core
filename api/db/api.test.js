@@ -46,7 +46,7 @@ describe('API Endpoints with SQLite', () => {
       
       expect(res.status).toBe(200);
       expect(res.body.name).toBe('@emet-protocol/api');
-      expect(res.body.version).toBe('0.4.0');
+      expect(res.body.version).toBe('0.8.0');
       expect(res.body.storage).toBe('sqlite');
       expect(res.body.schemaVersion).toBe(1);
     });

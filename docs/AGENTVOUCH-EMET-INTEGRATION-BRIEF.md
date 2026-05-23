@@ -159,7 +159,13 @@ A runnable mock harness now exists at [`../examples/agentvouch-emet-router.js`](
 node examples/agentvouch-emet-router.js
 ```
 
-It models AgentVouch-style Solana identities, stake, attestations, resolved outcomes, open challenges, domain history, and revocation state. The output selects an assignment when policy allows it and still emits the full decision set so operators can inspect blocks and `challenge_first` cases.
+The harness also exports its policy functions for invariant checks:
+
+```bash
+node examples/agentvouch-emet-router.test.js
+```
+
+It models AgentVouch-style Solana identities, stake, attestations, resolved outcomes, open challenges, domain history, and revocation state. The output selects an assignment when policy allows it and still emits the full decision set so operators can inspect blocks and `challenge_first` cases. The test locks in the safety boundaries: revoked or out-of-scope agents block, customer-facing and privileged tasks select only qualified profiles, and financial tasks fail closed when no profile clears the capped policy.
 
 Success criterion: the system can explain why an agent was allowed, capped, reviewed, challenged, or blocked for a specific task.
 

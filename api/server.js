@@ -142,13 +142,14 @@ app.post('/claims', (req, res) => {
 
     const claim = emet.createClaim(req.body);
     store.put(claim);
+    const storedClaim = store.get(claim.id) || claim;
     
     // Record claim for reputation tracking
     reputation.recordClaim(req.body.issuer, claim.id);
     
     treeCache = null; // invalidate
 
-    res.status(201).json(claim);
+    res.status(201).json(storedClaim);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -240,9 +241,10 @@ app.post('/claims/:id/sign', (req, res) => {
     }
 
     store.put(updated);
+    const storedUpdated = store.get(id) || updated;
     treeCache = null;
 
-    res.json(updated);
+    res.json(storedUpdated);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -320,7 +322,11 @@ app.post('/tree/prove', (req, res) => {
     }
 
     const proof = emet.getProof(tree, leafIndex);
-    res.json(proof);
+    res.json({
+      ...proof,
+      leafIndex: proof.leafIndex ?? proof.index ?? leafIndex,
+      proof: proof.proof || proof.siblings || [],
+    });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }

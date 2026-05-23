@@ -178,6 +178,10 @@ function createClaimsStore(database = null) {
         id: row.id,
         type: row.type,
         issuer: row.issuer,
+        statement: content.statement,
+        domain: content.domain,
+        scope: content.scope,
+        caveats: content.caveats,
         content,
         evidence,
         confidence: row.confidence,
@@ -211,6 +215,7 @@ function createClaimsStore(database = null) {
           publicKey: sigRow.public_key,
           signature: sigRow.signature,
           timestamp: sigRow.timestamp,
+          signedAt: sigRow.timestamp,
           canonicalization: sigRow.canonicalization,
           hashAlgorithm: sigRow.hash_algorithm
         };
